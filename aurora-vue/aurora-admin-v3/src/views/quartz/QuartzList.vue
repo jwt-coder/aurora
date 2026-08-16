@@ -476,7 +476,7 @@ function fetchJobs() {
     status: searchForm.status
   }).then(res => {
     jobList.value = res.data.records || []
-    pagination.itemCount = res.data.total || 0
+    pagination.itemCount = res.data.count || 0
     loading.value = false
   }).catch(err => {
     console.error('获取任务列表失败:', err)
@@ -555,6 +555,8 @@ async function handleSaveJob() {
 function handleDelete(id) {
   deleteJobApi([id]).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (jobList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchJobs()
   }).catch(err => {
     console.error('删除失败:', err)
@@ -565,6 +567,8 @@ function handleDelete(id) {
 function handleBatchDelete() {
   deleteJobApi(selectedIds.value).then(() => {
     message.success('批量删除成功')
+    // 批量删除后如果当前页数据都被删完且不是第一页，回退一页
+    if (jobList.value.length <= selectedIds.value.length && pagination.page > 1) pagination.page--
     selectedIds.value = []
     fetchJobs()
   }).catch(err => {
@@ -629,7 +633,7 @@ function fetchJobLogs() {
     status: logSearchForm.status !== null ? logSearchForm.status : undefined
   }).then(res => {
     logList.value = res.data.records || []
-    logPagination.itemCount = res.data.total || 0
+    logPagination.itemCount = res.data.count || 0
     logLoading.value = false
   }).catch(err => {
     console.error('获取日志失败:', err)
@@ -675,6 +679,8 @@ function handleBatchDeleteLogs() {
   }
   deleteJobLogsApi(selectedLogIds.value).then(() => {
     message.success('删除成功')
+    // 批量删除后如果当前页数据都被删完且不是第一页，回退一页
+    if (logList.value.length <= selectedLogIds.value.length && logPagination.page > 1) logPagination.page--
     selectedLogIds.value = []
     fetchJobLogs()
   }).catch(err => {
@@ -686,6 +692,8 @@ function handleBatchDeleteLogs() {
 function handleCleanLogs() {
   cleanJobLogsApi().then(() => {
     message.success('清空成功')
+    // 清空后所有日志都没了，页码归 1
+    logPagination.page = 1
     fetchJobLogs()
   }).catch(err => {
     console.error('清空日志失败:', err)

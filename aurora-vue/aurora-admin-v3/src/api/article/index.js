@@ -8,9 +8,6 @@ export const getArticlesApi = (params) => request.get('/api/admin/articles', { p
 // 删除文章
 export const deleteArticleApi = (data) => request.delete('/api/admin/articles/delete', { data })
 
-// 更新文章状态
-export const updateArticleStatusApi = (data) => request.put('/api/admin/articles/status', data)
-
 // 导出文章
 export const exportArticlesApi = (articleIds) => request.post('/api/admin/articles/export', articleIds)
 
@@ -32,7 +29,4 @@ export const uploadArticleImageApi = (formData) => request.post('/api/admin/arti
 
 // 修改文章置顶和推荐
 export const updateArticleTopAndFeaturedApi = (data) => request.put('/api/admin/articles/topAndFeatured', data)
-
-// 搜索文章
-export const searchArticlesApi = (params) => request.get('/api/admin/articles/search', { params })
 

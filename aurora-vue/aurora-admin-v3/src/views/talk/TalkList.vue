@@ -70,12 +70,12 @@
                     </span>
                   </div>
                   <div class="talk-content" v-html="item.content" />
-                  <n-grid v-if="item.imgs && item.imgs.length > 0" :x-gap="4" :cols="3" class="talk-images">
-                    <n-gi v-for="(img, index) in item.imgs" :key="index">
+                  <n-grid v-if="item.images && item.images.length > 0" :x-gap="4" :cols="3" class="talk-images">
+                    <n-gi v-for="(img, index) in item.images" :key="index">
                       <n-image
                         class="image-item"
                         :src="img"
-                        :preview-src-list="item.imgs"
+                        :preview-src-list="item.images"
                         :initial-index="index"
                       />
                     </n-gi>
@@ -151,6 +151,17 @@ function getActionOptions(item) {
   ]
 }
 
+// 后端 images 为 JSON 字符串，容错解析为数组
+function parseImages(str) {
+  if (!str) return []
+  try {
+    const arr = JSON.parse(str)
+    return Array.isArray(arr) ? arr : []
+  } catch (e) {
+    return []
+  }
+}
+
 function fetchTalks() {
   loading.value = true
   getTalksApi({
@@ -158,7 +169,10 @@ function fetchTalks() {
     size: pagination.pageSize,
     status: searchForm.status
   }).then(res => {
-    talkList.value = res.data.records || []
+    talkList.value = (res.data.records || []).map(row => ({
+      ...row,
+      images: parseImages(row.images)
+    }))
     pagination.itemCount = res.data.count || 0
   }).catch(err => {
     console.error('获取说说列表失败:', err)
@@ -194,6 +208,8 @@ function handleDeleteConfirm(id) {
     onPositiveClick: () => {
       deleteTalkApi([id]).then(() => {
         message.success('删除成功')
+        // 删除后如果当前页只剩这一条且不是第一页，回退一页
+        if (talkList.value.length === 1 && pagination.page > 1) pagination.page--
         fetchTalks()
       }).catch(err => {
         console.error('删除失败:', err)

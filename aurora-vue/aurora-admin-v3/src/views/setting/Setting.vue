@@ -251,7 +251,7 @@ onMounted(() => {
 }
 
 .avatar-uploader:hover {
-  border-color: #409eff;
+  border-color: #e93796;
 }
 
 .avatar-uploader-icon {

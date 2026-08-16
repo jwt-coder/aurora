@@ -223,7 +223,8 @@ const fetchHomeData = async () => {
     if (data.tagDTOs && data.tagDTOs.length > 0) {
       tagList.value = data.tagDTOs.map(tag => ({
         name: tag.tagName,
-        id: tag.id
+        id: tag.id,
+        count: tag.count
       }))
     }
   } catch (error) {

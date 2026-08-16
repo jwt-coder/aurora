@@ -76,8 +76,6 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     @Override
     public void sendCode(SendCodeVO sendCodeVO) {
-        System.out.println("发送验证码请求 - 邮箱: " + sendCodeVO.getUsername() + ", 图形验证码: " + sendCodeVO.getCaptcha() + ", UUID: " + sendCodeVO.getCaptchaUuid());
-        
         if (!checkEmail(sendCodeVO.getUsername())) {
             throw new BizException("邮箱格式不对!");
         }
@@ -93,8 +91,7 @@ public class UserAuthServiceImpl implements UserAuthService {
         // 验证图形验证码
         String captchaKey = "captcha:" + sendCodeVO.getCaptchaUuid();
         String storedCaptcha = (String) redisService.get(captchaKey);
-        System.out.println("Redis中的验证码: " + storedCaptcha + ", 用户输入: " + sendCodeVO.getCaptcha().toLowerCase());
-        
+
         if (storedCaptcha == null) {
             throw new BizException("图形验证码已过期！");
         }
@@ -123,8 +120,6 @@ public class UserAuthServiceImpl implements UserAuthService {
                 .build();
         rabbitTemplate.convertAndSend(EMAIL_EXCHANGE, "*", new Message(JSON.toJSONBytes(emailDTO), new MessageProperties()));
         redisService.set(USER_CODE_KEY + sendCodeVO.getUsername(), code, CODE_EXPIRE_TIME);
-        
-        System.out.println("验证码发送成功: " + code);
     }
 
     @Override
@@ -285,6 +280,8 @@ public class UserAuthServiceImpl implements UserAuthService {
         // 验证成功后删除验证码和使用标记
         redisService.del(captchaKey);
         redisService.del(captchaKey + ":used");
+        // 邮箱验证码验证通过后删除，防止重复使用
+        redisService.del(USER_CODE_KEY + user.getUsername());
         
         UserAuth userAuth = userAuthMapper.selectOne(new LambdaQueryWrapper<UserAuth>()
                 .select(UserAuth::getUsername)

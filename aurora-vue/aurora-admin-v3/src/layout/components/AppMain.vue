@@ -208,7 +208,7 @@ onMounted(() => {
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  background: #f5f6fb;
+  background: #f1f3f9;
 }
 
 .app-main-container :deep(.n-tabs) {

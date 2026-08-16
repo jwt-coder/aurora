@@ -271,6 +271,8 @@ function changeReview(value) {
 function handleApprove(id) {
   reviewCommentsApi({ ids: [id], isReview: 1 }).then(() => {
     message.success('审核通过')
+    // 审核通过后该条会从审核中列表消失，如果当前页只剩这一条且不是第一页，回退一页
+    if (commentList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchComments()
   }).catch(err => {
     console.error('审核失败:', err)
@@ -281,6 +283,8 @@ function handleApprove(id) {
 function handleBatchApprove() {
   reviewCommentsApi({ ids: selectedIds.value, isReview: 1 }).then(() => {
     message.success('批量审核通过')
+    // 批量审核后如果当前页数据都被审完且不是第一页，回退一页
+    if (commentList.value.length <= selectedIds.value.length && pagination.page > 1) pagination.page--
     selectedIds.value = []
     fetchComments()
   }).catch(err => {
@@ -292,6 +296,8 @@ function handleBatchApprove() {
 function handleDelete(id) {
   deleteCommentsApi([id]).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (commentList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchComments()
   }).catch(err => {
     console.error('删除失败:', err)
@@ -302,6 +308,8 @@ function handleDelete(id) {
 function handleBatchDelete() {
   deleteCommentsApi(selectedIds.value).then(() => {
     message.success('批量删除成功')
+    // 批量删除后如果当前页数据都被删完且不是第一页，回退一页
+    if (commentList.value.length <= selectedIds.value.length && pagination.page > 1) pagination.page--
     selectedIds.value = []
     fetchComments()
   }).catch(err => {

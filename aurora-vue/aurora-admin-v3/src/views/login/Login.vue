@@ -171,7 +171,7 @@ onMounted(() => {
 
 /* 默认背景 */
 .login-container:not([style*="backgroundImage"]) {
-  background: #f5f7fa;
+  background: #f1f3f9;
 }
 
 /* 当有背景图片时，添加遮罩层（仅在手机端纵向布局时） */
@@ -206,7 +206,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   padding: 60px 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(130deg, #24c6dc, #5433ff 41.07%, #ff0099 76.05%);
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -280,12 +280,12 @@ onMounted(() => {
 .logo-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(130deg, #24c6dc, #5433ff 41.07%, #ff0099 76.05%);
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 8px 24px rgba(233, 55, 150, 0.25);
 }
 
 .logo-icon img {
@@ -340,13 +340,13 @@ onMounted(() => {
 
 .login-form :deep(.n-input:hover .n-input__border),
 .login-form :deep(.n-input:hover .n-input__state-border) {
-  border-color: #667eea !important;
+  border-color: #e93796 !important;
 }
 
 .login-form :deep(.n-input.n-input--focus .n-input__border),
 .login-form :deep(.n-input.n-input--focus .n-input__state-border) {
-  border-color: #667eea !important;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
+  border-color: #e93796 !important;
+  box-shadow: 0 0 0 3px rgba(233, 55, 150, 0.08);
 }
 
 .login-form :deep(.n-icon) {
@@ -359,16 +359,16 @@ onMounted(() => {
   border-radius: 10px;
   font-size: 15px;
   font-weight: 500;
-  background: #667eea;
+  background: #e93796;
   border: none;
   margin-top: 8px;
   transition: all 0.2s ease;
 }
 
 .login-form :deep(.n-button:hover) {
-  background: #5568d3;
+  background: #f2539f;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 12px rgba(233, 55, 150, 0.25);
 }
 
 .login-form :deep(.n-button:active) {

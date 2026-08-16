@@ -11,6 +11,3 @@ export const saveTalkApi = (data) => request.post('/api/admin/talks', data)
 
 // 删除说说
 export const deleteTalkApi = (data) => request.delete('/api/admin/talks', { data })
-
-// 更新说说
-export const updateTalkApi = (data) => request.put('/api/admin/talks', data)

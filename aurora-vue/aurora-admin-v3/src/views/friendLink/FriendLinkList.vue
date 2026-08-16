@@ -288,6 +288,8 @@ async function handleSubmit() {
 function handleDelete(id) {
   deleteFriendLinkApi([id]).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (linkList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchLinks()
   }).catch(err => {
     console.error('删除失败:', err)
@@ -298,6 +300,8 @@ function handleDelete(id) {
 function handleBatchDelete() {
   deleteFriendLinkApi(selectedIds.value).then(() => {
     message.success('批量删除成功')
+    // 批量删除后如果当前页数据都被删完且不是第一页，回退一页
+    if (linkList.value.length <= selectedIds.value.length && pagination.page > 1) pagination.page--
     selectedIds.value = []
     fetchLinks()
   }).catch(err => {

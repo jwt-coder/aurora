@@ -14,12 +14,6 @@ export const deletePhotoApi = (data) => request.delete('/api/admin/photos', { da
 // 更新照片信息
 export const updatePhotoApi = (data) => request.put('/api/admin/photos', data)
 
-// 移动照片到回收站
-export const movePhotoToTrashApi = (id) => request.put(`/api/admin/photos/${id}/trash`)
-
-// 恢复照片
-export const restorePhotoApi = (id) => request.put(`/api/admin/photos/${id}/restore`)
-
 // 批量更新照片删除状态（恢复或移到回收站）
 export const updatePhotosDeleteApi = (data) => request.put('/api/admin/photos/delete', data)
 
@@ -45,6 +39,3 @@ export const getAlbumsInfoApi = () => request.get('/api/admin/photos/albums/info
 
 // 根据id获取后台相册信息
 export const getAlbumInfoApi = (id) => request.get(`/api/admin/photos/albums/${id}/info`)
-
-// 获取相册列表（前台）
-export const getPublicAlbumsApi = () => request.get('/photos/albums')

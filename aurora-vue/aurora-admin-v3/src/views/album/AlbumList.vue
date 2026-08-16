@@ -242,6 +242,8 @@ async function handleSubmit() {
 function handleDeleteAlbum(album) {
   deleteAlbumApi(album.id).then(() => {
     message.success('删除相册成功')
+    // 删除后如果当前页只剩这一个且不是第一页，回退一页
+    if (albumList.value.length === 1 && pagination.value.current > 1) pagination.value.current--
     fetchAlbums()
   }).catch(err => {
     console.error('删除相册失败:', err)

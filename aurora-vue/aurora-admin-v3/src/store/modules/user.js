@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginApi, getUserInfoApi } from '@/api/auth'
+import { loginApi } from '@/api/auth'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -49,17 +49,6 @@ export const useUserStore = defineStore('user', {
       this.permissions = []
       this.roles = []
       sessionStorage.removeItem('token')
-    },
-
-    // 获取用户信息
-    async getUserInfo() {
-      try {
-        const res = await getUserInfoApi()
-        this.userInfo = res.data
-        return res
-      } catch (error) {
-        return Promise.reject(error)
-      }
     }
   }
 })

@@ -1,6 +1,6 @@
 /* Naive UI 主题覆盖 */
 .n-layout {
-  background-color: #f5f6fb;
+  background-color: #f1f3f9;
 }
 
 .n-layout-sider {
@@ -8,24 +8,25 @@
 }
 
 .n-card {
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(232, 57, 255, 0.06), 0 10px 10px -5px rgba(53, 11, 59, 0.1);
 }
 
 .n-button {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .n-input {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .n-select {
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 /* 自定义主题色 */
 :root {
-  --primary-color: #409EFF;
+  --primary-color: #e93796;
   --success-color: #67C23A;
   --warning-color: #E6A23C;
   --danger-color: #F56C6C;

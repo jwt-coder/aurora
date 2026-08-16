@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, onActivated, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NTag, NImage, NSpace, NPopconfirm, NSwitch, NPagination, useMessage, useDialog } from 'naive-ui'
 import { getArticlesApi, deleteArticleApi, exportArticlesApi, updateArticleTopAndFeaturedApi } from '@/api/article'
@@ -363,6 +363,8 @@ const handleBatchDelete = () => {
       try {
         await deleteArticleApi(selectedArticleIds.value)
         message.success('删除成功')
+        // 删除后如果当前页数据都被删完且不是第一页，回退一页
+        if (articles.value.length <= selectedArticleIds.value.length && pagination.page > 1) pagination.page--
         selectedArticleIds.value = []
         fetchArticles()
       } catch (error) {
@@ -377,6 +379,8 @@ const handleDelete = async (id) => {
   try {
     await deleteArticleApi([id])
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (articles.value.length === 1 && pagination.page > 1) pagination.page--
     fetchArticles()
   } catch (error) {
     message.error('删除失败')
@@ -470,6 +474,10 @@ onMounted(() => {
   fetchArticles()
   fetchCategories()
   fetchTags()
+})
+
+onActivated(() => {
+  fetchArticles()
 })
 </script>
 

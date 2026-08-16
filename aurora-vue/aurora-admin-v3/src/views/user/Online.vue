@@ -5,10 +5,10 @@
         <!-- 搜索栏 -->
         <n-form inline>
           <n-form-item label="关键词">
-            <n-input v-model:value="keywords" placeholder="请输入用户昵称" clearable style="width: 200px" @keyup.enter="fetchOnlineUsers" />
+            <n-input v-model:value="keywords" placeholder="请输入用户昵称" clearable style="width: 200px" @keyup.enter="handleSearch" />
           </n-form-item>
           <n-form-item>
-            <n-button type="primary" @click="fetchOnlineUsers">搜索</n-button>
+            <n-button type="primary" @click="handleSearch">搜索</n-button>
           </n-form-item>
         </n-form>
 
@@ -140,13 +140,18 @@ function fetchOnlineUsers() {
     keywords: keywords.value
   }).then(res => {
     onlineUsers.value = res.data.records || []
-    pagination.itemCount = res.data.total || 0
+    pagination.itemCount = res.data.count || 0
     loading.value = false
   }).catch(err => {
     console.error('获取在线用户失败:', err)
     message.error('获取在线用户失败')
     loading.value = false
   })
+}
+
+function handleSearch() {
+  pagination.page = 1
+  fetchOnlineUsers()
 }
 
 function handleOffline(user) {

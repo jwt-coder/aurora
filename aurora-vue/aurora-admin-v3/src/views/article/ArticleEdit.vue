@@ -222,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, onDeactivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NIcon, useMessage, useDialog } from 'naive-ui'
 import { CloudUploadOutline, CloseOutline, DocumentTextOutline, SaveOutline, SendOutline } from '@vicons/ionicons5'
@@ -657,6 +657,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  autoSaveArticle()
+})
+
+onDeactivated(() => {
   autoSaveArticle()
 })
 </script>

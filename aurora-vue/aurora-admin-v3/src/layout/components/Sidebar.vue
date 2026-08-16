@@ -461,14 +461,14 @@ router.afterEach(() => {
 .logo-text {
   font-size: 24px;
   font-weight: bold;
-  color: #409EFF;
+  color: #e93796;
   margin: 0;
 }
 
 .logo-text-mini {
   font-size: 28px;
   font-weight: bold;
-  color: #409EFF;
+  color: #e93796;
   margin: 0;
 }
 

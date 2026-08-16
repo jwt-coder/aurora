@@ -77,7 +77,7 @@
 
 <script setup>
 import { ref, reactive, h, onMounted } from 'vue'
-import { NButton, NSpace, NSwitch, NIcon, NTag, useMessage } from 'naive-ui'
+import { NButton, NSpace, NSwitch, NIcon, NTag, useMessage, useDialog } from 'naive-ui'
 import { AddOutline } from '@vicons/ionicons5'
 import { getMenusApi, saveMenuApi, deleteMenuApi, updateMenuHiddenApi } from '@/api/menu'
 import dayjs from 'dayjs'
@@ -88,6 +88,7 @@ function formatDateTime(dateStr) {
 }
 
 const message = useMessage()
+const dialog = useDialog()
 
 const loading = ref(false)
 const menuList = ref([])

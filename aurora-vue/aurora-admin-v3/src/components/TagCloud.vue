@@ -190,6 +190,6 @@ watch(() => props.data, () => {
 }
 
 .tag-item:hover {
-  color: #409eff !important;
+  color: #e93796 !important;
 }
 </style>

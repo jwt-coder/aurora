@@ -291,6 +291,8 @@ function handleDelete(photo) {
     isDelete: 1
   }).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一张且不是第一页，回退一页
+    if (photoList.value.length === 1 && pagination.value.page > 1) pagination.value.page--
     fetchPhotos()
     fetchAlbumInfo() // 更新相册照片数量
   }).catch(err => {

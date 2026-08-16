@@ -1,5 +1,6 @@
 package com.aurora.strategy.impl;
 
+import com.aurora.enums.FileExtEnum;
 import com.aurora.exception.BizException;
 import com.aurora.strategy.UploadStrategy;
 import com.aurora.util.FileUtil;
@@ -18,6 +19,9 @@ public abstract class AbstractUploadStrategyImpl implements UploadStrategy {
         try {
             String md5 = FileUtil.getMd5(file.getInputStream());
             String extName = FileUtil.getExtName(file.getOriginalFilename());
+            if (FileExtEnum.getFileExt(extName) == null) {
+                throw new BizException("不支持的文件类型: " + extName);
+            }
             String fileName = md5 + extName;
             if (!exists(path + fileName)) {
                 upload(path, fileName, file.getInputStream());

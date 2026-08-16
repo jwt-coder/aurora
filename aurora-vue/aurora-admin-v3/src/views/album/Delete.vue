@@ -130,6 +130,8 @@ function handleRestore(photo) {
     isDelete: 0
   }).then(() => {
     message.success('恢复照片成功')
+    // 恢复后该照片会从回收站消失，如果当前页只剩这一张且不是第一页，回退一页
+    if (photoList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchPhotos()
   }).catch(err => {
     console.error('恢复照片失败:', err)
@@ -155,6 +157,8 @@ function handleRestoreAll() {
         isDelete: 0
       }).then(() => {
         message.success(`已恢复${photoIds.length}张照片`)
+        // 当前页照片全部恢复，如果不是第一页，回退一页
+        if (pagination.page > 1) pagination.page--
         fetchPhotos()
       }).catch(err => {
         console.error('恢复照片失败:', err)
@@ -173,6 +177,8 @@ function handleDelete(photo) {
     onPositiveClick: () => {
       deletePhotoApi([photo.id]).then(() => {
         message.success(`已删除：${photo.name}`)
+        // 删除后如果当前页只剩这一张且不是第一页，回退一页
+        if (photoList.value.length === 1 && pagination.page > 1) pagination.page--
         fetchPhotos()
       }).catch(err => {
         console.error('删除照片失败:', err)
@@ -197,6 +203,8 @@ function handleClearAll() {
       const photoIds = photoList.value.map(photo => photo.id)
       deletePhotoApi(photoIds).then(() => {
         message.success('已清空回收站')
+        // 当前页照片全部删除，如果不是第一页，回退一页
+        if (pagination.page > 1) pagination.page--
         fetchPhotos()
       }).catch(err => {
         console.error('清空回收站失败:', err)

@@ -35,6 +35,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
@@ -276,6 +278,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateArticle(ArticleVO articleVO) {
+        // 更新前先查旧状态，用于判断是否为"草稿→发布"转换
+        Integer oldStatus = null;
+        if (Objects.nonNull(articleVO.getId())) {
+            Article oldArticle = articleMapper.selectById(articleVO.getId());
+            oldStatus = Objects.nonNull(oldArticle) ? oldArticle.getStatus() : null;
+        }
         Category category = saveArticleCategory(articleVO);
         Article article = BeanCopyUtil.copyObject(articleVO, Article.class);
         if (Objects.nonNull(category)) {
@@ -284,8 +292,20 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setUserId(UserUtil.getUserDetailsDTO().getUserInfoId());
         this.saveOrUpdate(article);
         saveArticleTag(articleVO, article.getId());
-        if (article.getStatus().equals(1)) {
-            rabbitTemplate.convertAndSend(SUBSCRIBE_EXCHANGE, "*", new Message(JSON.toJSONBytes(article.getId()), new MessageProperties()));
+        boolean publishTransition = article.getStatus().equals(1) && !Integer.valueOf(1).equals(oldStatus);
+        if (publishTransition) {
+            Message message = new Message(JSON.toJSONBytes(article.getId()), new MessageProperties());
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                // 事务提交后再发送订阅消息，避免消费者读到未提交数据
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        rabbitTemplate.convertAndSend(SUBSCRIBE_EXCHANGE, "*", message);
+                    }
+                });
+            } else {
+                rabbitTemplate.convertAndSend(SUBSCRIBE_EXCHANGE, "*", message);
+            }
         }
     }
 

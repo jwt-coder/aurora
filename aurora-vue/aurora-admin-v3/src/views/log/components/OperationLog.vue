@@ -232,6 +232,8 @@ function handleCheck(row) {
 function handleDelete(id) {
   deleteOperationLogsApi([id]).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (logList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchLogs()
   }).catch(err => {
     console.error('删除失败:', err)
@@ -246,6 +248,8 @@ function handleBatchDelete() {
   }
   deleteOperationLogsApi(selectedIds.value).then(() => {
     message.success('删除成功')
+    // 批量删除后如果当前页数据都被删完且不是第一页，回退一页
+    if (logList.value.length <= selectedIds.value.length && pagination.page > 1) pagination.page--
     selectedIds.value = []
     isDeleteDialog.value = false
     fetchLogs()

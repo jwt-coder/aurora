@@ -30,9 +30,11 @@ public class MySqlSearchStrategyImpl implements SearchStrategy {
 
         // 只查询未删除且状态为公开的文章，并且标题包含关键词
         List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .select(Article::getId, Article::getArticleTitle)
                 .eq(Article::getIsDelete, FALSE)
                 .eq(Article::getStatus, PUBLIC.getStatus())
-                .like(Article::getArticleTitle, keywords));
+                .like(Article::getArticleTitle, keywords)
+                .last("limit 50"));
 
         return articles.stream().map(item -> {
             String articleTitle = item.getArticleTitle();
@@ -45,9 +47,9 @@ public class MySqlSearchStrategyImpl implements SearchStrategy {
                 }
             }
             if (isLowerCase) {
-                articleTitle = articleTitle.replaceAll(keywords.toLowerCase(), PRE_TAG + keywords.toLowerCase() + POST_TAG);
+                articleTitle = articleTitle.replace(keywords.toLowerCase(), PRE_TAG + keywords.toLowerCase() + POST_TAG);
             } else {
-                articleTitle = articleTitle.replaceAll(keywords.toUpperCase(), PRE_TAG + keywords.toUpperCase() + POST_TAG);
+                articleTitle = articleTitle.replace(keywords.toUpperCase(), PRE_TAG + keywords.toUpperCase() + POST_TAG);
             }
             return ArticleSearchDTO.builder()
                     .id(item.getId())

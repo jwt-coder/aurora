@@ -53,7 +53,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #f5f6fb;
+  background: #f1f3f9;
   transition: margin-left 0.3s;
 }
 

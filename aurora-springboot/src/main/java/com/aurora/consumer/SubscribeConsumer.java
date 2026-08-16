@@ -10,6 +10,7 @@ import com.aurora.service.SystemConfigProviderService;
 import com.aurora.service.UserInfoService;
 import com.aurora.util.EmailUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +19,13 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.aurora.constant.CommonConstant.TRUE;
 import static com.aurora.constant.RabbitMQConstant.SUBSCRIBE_QUEUE;
 
+@Slf4j
 @Component
 @RabbitListener(queues = SUBSCRIBE_QUEUE)
 public class SubscribeConsumer {
@@ -47,6 +50,10 @@ public class SubscribeConsumer {
         
         Integer articleId = JSON.parseObject(new String(data), Integer.class);
         Article article = articleService.getOne(new LambdaQueryWrapper<Article>().eq(Article::getId, articleId));
+        if (Objects.isNull(article)) {
+            log.warn("订阅消息消费失败，文章不存在，articleId: {}，丢弃消息", articleId);
+            return;
+        }
         List<UserInfo> users = userInfoService.list(new LambdaQueryWrapper<UserInfo>().eq(UserInfo::getIsSubscribe, TRUE));
         List<String> emails = users.stream().map(UserInfo::getEmail).collect(Collectors.toList());
         for (String email : emails) {

@@ -39,105 +39,105 @@
     </span>
   </div>
   <el-dialog v-model="loginDialogVisible" width="30%" :fullscreen="isMobile">
-    <div class="dialog-title">欢迎登录</div>
+    <div class="dialog-title">{{ t('auth.login-title') }}</div>
     <el-form @keyup.enter.native="login">
       <el-form-item model="userInfo">
-        <div class="input-label">📧 邮箱账号</div>
-        <el-input v-model="loginInfo.username" placeholder="请输入邮箱账号" />
+        <div class="input-label">{{ t('auth.email') }}</div>
+        <el-input v-model="loginInfo.username" :placeholder="t('auth.email-ph')" />
       </el-form-item>
       <el-form-item model="userInfo" type="password">
-        <div class="input-label">🔒 密码</div>
-        <el-input v-model="loginInfo.password" type="password" show-password placeholder="请输入密码" />
+        <div class="input-label">{{ t('auth.password') }}</div>
+        <el-input v-model="loginInfo.password" type="password" show-password :placeholder="t('auth.password-ph')" />
       </el-form-item>
       <el-form-item class="mt-6">
-        <el-button type="primary" @click="login" size="large" class="mx-auto">登录</el-button>
+        <el-button type="primary" @click="login" size="large" class="mx-auto">{{ t('auth.login-btn') }}</el-button>
       </el-form-item>
       <el-form-item v-if="qqLoginEnabled === 1" class="mt-3">
         <el-button @click="qqLogin" size="large" class="mx-auto qq-login-btn">
           <svg-icon icon-class="qq" style="margin-right: 8px;" />
-          QQ登录
+          {{ t('auth.qq-login') }}
         </el-button>
       </el-form-item>
       <div class="mt-5 flex justify-between items-center">
-        <span class="text" @click="openRegisterDialog">立即注册</span>
-        <span class="text" @click="openForgetPasswordDialog">忘记密码?</span>
+        <span class="text" @click="openRegisterDialog">{{ t('auth.register-now') }}</span>
+        <span class="text" @click="openForgetPasswordDialog">{{ t('auth.forget-password') }}</span>
       </div>
     </el-form>
   </el-dialog>
   <el-dialog v-model="registerDialogVisible" width="30%" :fullscreen="isMobile">
-    <div class="dialog-title">立即注册</div>
+    <div class="dialog-title">{{ t('auth.register-title') }}</div>
     <el-form>
       <el-form-item model="userInfo">
-        <div class="input-label">📧 邮箱账号</div>
-        <el-input v-model="loginInfo.username" placeholder="请输入邮箱账号" />
+        <div class="input-label">{{ t('auth.email') }}</div>
+        <el-input v-model="loginInfo.username" :placeholder="t('auth.email-ph')" />
       </el-form-item>
       <el-form-item model="userInfo">
-        <div class="input-label">🔢 图形验证码</div>
+        <div class="input-label">{{ t('auth.captcha') }}</div>
         <div class="flex items-center">
-          <el-input v-model="loginInfo.captcha" placeholder="请输入图形验证码" class="flex-1 mr-2" />
-          <img 
-            :src="captchaImage" 
-            @click="getCaptcha" 
-            class="captcha-img cursor-pointer border rounded" 
+          <el-input v-model="loginInfo.captcha" :placeholder="t('auth.captcha-ph')" class="flex-1 mr-2" />
+          <img
+            :src="captchaImage"
+            @click="getCaptcha"
+            class="captcha-img cursor-pointer border rounded"
             alt="验证码"
             title="点击刷新验证码"
           />
         </div>
       </el-form-item>
       <el-form-item model="userInfo">
-        <div class="input-label">✉️ 邮箱验证码</div>
-        <el-input v-model="loginInfo.code" placeholder="请输入邮箱验证码">
+        <div class="input-label">{{ t('auth.email-code') }}</div>
+        <el-input v-model="loginInfo.code" :placeholder="t('auth.email-code-ph')">
           <template #append>
-            <span class="text" @click="sendCode">发送</span>
+            <span class="text" @click="sendCode">{{ t('auth.send') }}</span>
           </template>
         </el-input>
       </el-form-item>
       <el-form-item model="userInfo" type="password">
-        <div class="input-label">🔒 密码</div>
-        <el-input v-model="loginInfo.password" type="password" show-password placeholder="请输入密码" />
+        <div class="input-label">{{ t('auth.password') }}</div>
+        <el-input v-model="loginInfo.password" type="password" show-password :placeholder="t('auth.password-ph')" />
       </el-form-item>
       <el-form-item class="mt-6">
-        <el-button type="primary" @click="register" size="large" class="mx-auto">注册</el-button>
+        <el-button type="primary" @click="register" size="large" class="mx-auto">{{ t('auth.register-btn') }}</el-button>
       </el-form-item>
       <div class="mt-5">
-        <span class="text" @click="returnLoginDialog">已有帐号?登录</span>
+        <span class="text" @click="returnLoginDialog">{{ t('auth.has-account') }}</span>
       </div>
     </el-form>
   </el-dialog>
   <el-dialog v-model="forgetPasswordDialogVisible" width="30%" :fullscreen="isMobile">
-    <div class="dialog-title">重置密码</div>
+    <div class="dialog-title">{{ t('auth.reset-title') }}</div>
     <el-form>
       <el-form-item model="userInfo">
-        <div class="input-label">📧 邮箱账号</div>
-        <el-input v-model="loginInfo.username" placeholder="请输入邮箱账号" />
+        <div class="input-label">{{ t('auth.email') }}</div>
+        <el-input v-model="loginInfo.username" :placeholder="t('auth.email-ph')" />
       </el-form-item>
       <el-form-item model="userInfo">
-        <div class="input-label">✉️ 邮箱验证码</div>
-        <el-input v-model="loginInfo.code" placeholder="请输入验证码">
+        <div class="input-label">{{ t('auth.email-code') }}</div>
+        <el-input v-model="loginInfo.code" :placeholder="t('auth.email-code-ph')">
           <template #append>
-            <span class="text" @click="sendCode">发送</span>
+            <span class="text" @click="sendCode">{{ t('auth.send') }}</span>
           </template>
         </el-input>
       </el-form-item>
       <el-form-item model="userInfo" type="password">
-        <div class="input-label">🔒 新密码</div>
-        <el-input v-model="loginInfo.password" type="password" show-password placeholder="请输入新密码" />
+        <div class="input-label">{{ t('auth.new-password') }}</div>
+        <el-input v-model="loginInfo.password" type="password" show-password :placeholder="t('auth.new-password-ph')" />
       </el-form-item>
       <el-form-item class="mt-6">
-        <el-button type="primary" @click="updatePassword" size="large" class="mx-auto">确定</el-button>
+        <el-button type="primary" @click="updatePassword" size="large" class="mx-auto">{{ t('auth.confirm-btn') }}</el-button>
       </el-form-item>
       <div class="mt-5">
-        <span class="text" @click="returnLoginDialog">返回登录</span>
+        <span class="text" @click="returnLoginDialog">{{ t('auth.back-login') }}</span>
       </div>
     </el-form>
   </el-dialog>
   <el-dialog v-model="articlePasswordDialogVisible" width="30%" :fullscreen="isMobile">
     <el-form @submit.native.prevent @keyup.enter.native="accessArticle">
       <el-form-item model="userInfo" class="mt-5">
-        <el-input id="article-password-input" v-model="articlePassword" placeholder="文章受密码保护,请输入密码" />
+        <el-input id="article-password-input" v-model="articlePassword" :placeholder="t('auth.article-password-ph')" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="accessArticle" size="large" class="mx-auto mt-3">校验密码</el-button>
+        <el-button type="primary" @click="accessArticle" size="large" class="mx-auto mt-3">{{ t('auth.verify-btn') }}</el-button>
       </el-form-item>
     </el-form>
   </el-dialog>
@@ -578,24 +578,12 @@ export default defineComponent({
   width: 300px !important;
 }
 
+/* 弹窗基础：跟随博客主题变量，自动适配深色模式 */
 .el-dialog {
-  border-radius: 24px !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 250, 255, 0.95) 100%) !important;
-  backdrop-filter: blur(20px) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.5) inset !important;
+  border-radius: 12px !important;
+  background: var(--background-secondary) !important;
+  box-shadow: var(--accent-shadow) !important;
   overflow: hidden !important;
-  animation: dialogFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-@keyframes dialogFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .el-dialog__header {
@@ -604,76 +592,44 @@ export default defineComponent({
 }
 
 .el-dialog__body {
-  padding: 40px 45px 45px !important;
+  padding: 28px !important;
 }
 
 .dialog-title {
-  text-align: center;
-  font-size: 24px;
-  font-weight: 700;
-  color: #303133;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  position: relative;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.dialog-title::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, #409EFF, #66b1ff, transparent);
-  border-radius: 2px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title-h2);
+  margin-bottom: 20px;
 }
 
 .el-dialog__headerbtn {
   outline: none !important;
-  top: 20px !important;
-  right: 20px !important;
-  width: 40px !important;
-  height: 40px !important;
-  font-size: 24px !important;
-  color: #999 !important;
-  transition: all 0.3s ease !important;
+  top: 16px !important;
+  right: 16px !important;
+  color: var(--text-dim) !important;
+  transition: color 0.2s ease !important;
 }
 
 .el-dialog__headerbtn:hover {
-  color: #333 !important;
-  transform: rotate(90deg) !important;
+  color: var(--text-normal) !important;
 }
 
 .el-button {
   width: 100% !important;
-  height: 45px !important;
-  border-radius: 12px !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  letter-spacing: 2px !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  border: none !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
 }
 
 .el-button--primary {
-  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%) !important;
-  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.4) !important;
+  background: var(--text-accent) !important;
   color: #fff !important;
+  border: none !important;
 }
 
 .el-button--primary:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 8px 30px rgba(64, 158, 255, 0.5) !important;
-}
-
-.el-button--primary:active {
-  transform: translateY(-1px) !important;
+  opacity: 0.85;
 }
 
 .el-form-item {
@@ -685,42 +641,26 @@ export default defineComponent({
 }
 
 .input-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #606266;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 6px;
 }
 
 .el-input-group__append {
-  background-color: var(--background-primary-alt) !important;
+  background: transparent !important;
   cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  border-radius: 0 10px 10px 0 !important;
-  border: 2px solid rgba(64, 158, 255, 0.2) !important;
-  border-left: none !important;
-  padding: 0 18px !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center !important;
+  box-shadow: none !important;
+  padding: 0 14px !important;
 }
 
 .el-input-group__append:hover {
-  background: linear-gradient(135deg, #409EFF 0%, #66b1ff 100%) !important;
-  color: #fff !important;
-  border-color: #409EFF !important;
+  background: var(--bg-accent-05) !important;
 }
 
 .el-input-group__append .text {
-  color: #409EFF !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-}
-
-.el-input-group__append:hover .text {
-  color: #fff !important;
+  color: var(--text-accent) !important;
+  font-weight: 500 !important;
 }
 
 .el-form-item__label {
@@ -731,80 +671,41 @@ export default defineComponent({
 
 .el-input__inner {
   color: var(--text-normal) !important;
-  background-color: var(--background-primary-alt) !important;
-  border: 2px solid rgba(64, 158, 255, 0.2) !important;
-  border-radius: 12px !important;
-  height: 45px !important;
-  line-height: 45px !important;
-  padding: 0 20px !important;
-  font-size: 14px !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.el-input__inner:focus {
-  border-color: rgba(64, 158, 255, 0.6) !important;
-  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.1) !important;
-  transform: translateY(-2px) !important;
+  height: 40px !important;
+  line-height: 40px !important;
 }
 
 .el-input__wrapper {
-  background: var(--background-primary-alt) !important;
-  border-radius: 12px !important;
-  box-shadow: none !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  padding: 1px 15px !important;
+  background: var(--background-primary) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 1px var(--background-trans) inset !important;
+  transition: box-shadow 0.2s ease !important;
+  padding: 1px 14px !important;
 }
 
 .el-input__wrapper:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0 0 1px var(--text-dim) inset !important;
 }
 
 .el-input.is-focus .el-input__wrapper {
-  box-shadow: 0 0 0 4px rgba(64, 158, 255, 0.1) !important;
-}
-
-.el-input__prefix {
-  color: #409EFF !important;
-  font-size: 16px !important;
-}
-
-.el-input__prefix-inner {
-  display: flex !important;
-  align-items: center !important;
+  box-shadow: 0 0 0 1px var(--text-accent) inset, 0 0 0 3px var(--bg-accent-05) !important;
 }
 </style>
 <style lang="scss" scoped>
 .text {
-  color: #409EFF;
+  color: var(--text-accent);
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.3s ease;
-  position: relative;
-  display: inline-block;
-}
-
-.text::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #409EFF, #66b1ff);
-  transition: width 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .text:hover {
-  color: #66b1ff;
-}
-
-.text:hover::after {
-  width: 100%;
+  opacity: 0.7;
 }
 
 #submit-button {
   outline: none;
-  background: #0fb6d6;
+  background: var(--text-accent);
 }
 .header-controls {
   span {
@@ -870,23 +771,20 @@ export default defineComponent({
 }
 .captcha-img {
   width: 110px;
-  height: 45px;
-  border: 2px solid rgba(64, 158, 255, 0.2);
-  border-radius: 10px;
-  transition: all 0.3s ease;
+  height: 40px;
+  border: 1px solid var(--background-trans);
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
   cursor: pointer;
   object-fit: cover;
 }
 
 .captcha-img:hover {
-  border-color: rgba(64, 158, 255, 0.6);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+  border-color: var(--text-accent);
 }
 
 .qq-login-btn {
-  background: linear-gradient(135deg, #12B7F5 0%, #00A6ED 100%) !important;
-  box-shadow: 0 4px 20px rgba(18, 183, 245, 0.4) !important;
+  background: #12b7f5 !important;
   color: #fff !important;
   display: flex !important;
   align-items: center !important;
@@ -894,7 +792,6 @@ export default defineComponent({
 }
 
 .qq-login-btn:hover {
-  background: linear-gradient(135deg, #00A6ED 0%, #0095D9 100%) !important;
-  box-shadow: 0 8px 30px rgba(18, 183, 245, 0.5) !important;
+  background: #00a1e0 !important;
 }
 </style>

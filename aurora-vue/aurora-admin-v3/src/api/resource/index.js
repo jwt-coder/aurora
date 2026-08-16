@@ -10,9 +10,3 @@ export const saveResourceApi = (data) => request.post('/api/admin/resources', da
 
 // 删除资源
 export const deleteResourceApi = (id) => request.delete(`/api/admin/resources/${id}`)
-
-// 修改资源匿名访问状态
-export const changeResourceAnonymousApi = (data) => request.put('/api/admin/resources/anonymous', data)
-
-// 获取用户资源权限
-export const getUserResourcesApi = () => request.get('/api/admin/user/resources')

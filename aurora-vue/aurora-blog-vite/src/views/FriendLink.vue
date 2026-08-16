@@ -27,11 +27,10 @@
             </el-row>
           </div>
           <div class="post-html text-center">
-            <p
-                v-html="`需要交换友链的可在下方点击按钮提交申请💖<br><br>友链信息展示需要，你的信息格式要包含：名称、头像、链接、介绍。`"
-            />
+            <p>{{ t('friends.tip-1') }}</p>
+            <p>{{ t('friends.tip-2') }}</p>
             <button class="apply-button" @click="linkState.showLinkForm = true">
-              申请友链
+              {{ t('friends.apply-btn') }}
             </button>
           </div>
           <Comment />
@@ -45,18 +44,18 @@
     </div>
     <!-- 申请友链对话框 -->
     <el-dialog v-model="linkState.showLinkForm" width="30%" :fullscreen="isMobile">
-      <div class="dialog-title">申请友链</div>
+      <div class="dialog-title">{{ t('friends.apply-title') }}</div>
       <el-form ref="applyForm" :model="linkState.linkForm" :rules="linkState.rules">
         <el-form-item prop="name">
-          <div class="input-label">🏷️ 站点名称</div>
-          <el-input v-model="linkState.linkForm.name" placeholder="请输入站点名称（2-20个字符）"></el-input>
+          <div class="input-label">{{ t('friends.name') }}</div>
+          <el-input v-model="linkState.linkForm.name" :placeholder="t('friends.name-ph')"></el-input>
         </el-form-item>
         <el-form-item prop="avatar">
-          <div class="input-label">🖼️ 站点头像</div>
+          <div class="input-label">{{ t('friends.avatar') }}</div>
           <div class="flex items-center gap-2">
             <el-input 
               v-model="linkState.linkForm.avatar" 
-              placeholder="请输入头像链接或点击上传图片"
+              :placeholder="t('friends.avatar-ph')"
               class="flex-1">
             </el-input>
             <el-upload
@@ -67,7 +66,7 @@
               :on-error="handleUploadError"
               accept="image/jpeg,image/jpg,image/png,image/gif">
               <el-button type="primary" size="default" :loading="linkState.uploading">
-                {{ linkState.uploading ? '上传中' : '上传' }}
+                {{ linkState.uploading ? t('friends.uploading') : t('friends.upload') }}
               </el-button>
             </el-upload>
           </div>
@@ -76,12 +75,12 @@
           </div>
         </el-form-item>
         <el-form-item prop="address">
-          <div class="input-label">🔗 站点链接</div>
-          <el-input v-model="linkState.linkForm.address" placeholder="请输入站点链接（http://或https://）"></el-input>
+          <div class="input-label">{{ t('friends.address') }}</div>
+          <el-input v-model="linkState.linkForm.address" :placeholder="t('friends.address-ph')"></el-input>
         </el-form-item>
         <el-form-item prop="intro">
-          <div class="input-label">📝 站点介绍</div>
-          <el-input v-model="linkState.linkForm.intro" placeholder="请输入站点介绍（5-25个字符）"></el-input>
+          <div class="input-label">{{ t('friends.intro') }}</div>
+          <el-input v-model="linkState.linkForm.intro" :placeholder="t('friends.intro-ph')"></el-input>
         </el-form-item>
         <el-form-item class="mt-6">
           <el-button
@@ -91,11 +90,11 @@
               :disabled="linkState.isSubmitting"
               @click="submitLink"
           >
-            {{ linkState.isSubmitting ? '提交中...' : '提交申请' }}
+            {{ linkState.isSubmitting ? t('friends.submitting') : t('friends.submit') }}
           </el-button>
         </el-form-item>
         <el-form-item>
-          <el-button class="mx-auto cancel-btn" @click="linkState.showLinkForm = false">取消</el-button>
+          <el-button class="mx-auto cancel-btn" @click="linkState.showLinkForm = false">{{ t('friends.cancel') }}</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -410,127 +409,20 @@ export default defineComponent({
 .apply-button {
   display: block;
   margin: 20px auto;
-  padding: 10px 20px;
-  background-color: #49BDAD;
-  color: white;
+  padding: 10px 32px;
+  background: var(--strong-gradient);
+  color: #fff;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-</style>
-
-<style lang="scss">
-.friend-link-dialog.el-dialog {
-  border-radius: 16px !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-}
-
-.friend-link-dialog .el-dialog__header {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.friend-link-dialog .el-dialog__body {
-  padding: 35px 40px 40px !important;
-}
-
-.friend-link-dialog .dialog-title {
-  text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 30px;
-}
-
-.friend-link-dialog .el-dialog__headerbtn {
-  outline: none !important;
-  top: 20px !important;
-  right: 20px !important;
-}
-
-.friend-link-dialog .el-button {
-  width: 100% !important;
-  height: 44px !important;
-  border-radius: 8px !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  transition: all 0.2s !important;
-}
-
-.friend-link-dialog .el-button--primary {
-  background: #49BDAD !important;
-  border-color: #49BDAD !important;
-}
-
-.friend-link-dialog .el-button--primary:hover {
-  background: #5fd4c1 !important;
-  border-color: #5fd4c1 !important;
-  transform: translateY(-1px) !important;
-}
-
-.friend-link-dialog .el-button--primary:active {
-  transform: translateY(0) !important;
-}
-
-.friend-link-dialog .el-button--primary:disabled {
-  background: #a5d8d1 !important;
-  cursor: not-allowed !important;
-  opacity: 0.6 !important;
-}
-
-.friend-link-dialog .cancel-btn {
-  background: #f5f7fa !important;
-  color: #606266 !important;
-  border-color: #dcdfe6 !important;
-}
-
-.friend-link-dialog .cancel-btn:hover {
-  background: #e4e7ed !important;
-  transform: translateY(-1px) !important;
-}
-
-.friend-link-dialog .el-form-item {
-  margin-bottom: 20px !important;
-}
-
-.friend-link-dialog .input-label {
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 500;
-  color: #606266;
-  margin-bottom: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.friend-link-dialog .el-form-item__label {
-  display: none !important;
-}
-
-.friend-link-dialog .el-input__inner {
-  color: var(--text-normal) !important;
-  background-color: var(--background-primary-alt) !important;
-  border: 1px solid #dcdfe6 !important;
-  border-radius: 8px !important;
-  height: 44px !important;
-  padding: 0 15px !important;
-  font-size: 14px !important;
-  transition: all 0.2s !important;
-}
-
-.friend-link-dialog .el-input__inner:focus {
-  border-color: #49BDAD !important;
-  box-shadow: 0 0 0 2px rgba(73, 189, 173, 0.1) !important;
-}
-
-.friend-link-dialog .el-input__wrapper {
-  background: var(--background-primary-alt) !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
-  transition: all 0.2s !important;
-  padding: 1px 15px !important;
-}
-
-.friend-link-dialog .el-input.is-focus .el-input__wrapper {
-  box-shadow: 0 0 0 2px rgba(73, 189, 173, 0.1) !important;
+.apply-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 </style>
+

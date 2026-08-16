@@ -89,6 +89,8 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         if (!emailVO.getCode().equals(redisService.get(USER_CODE_KEY + emailVO.getEmail()).toString())) {
             throw new BizException("验证码错误！");
         }
+        // 验证成功后删除邮箱验证码，防止重复使用
+        redisService.del(USER_CODE_KEY + emailVO.getEmail());
         UserInfo userInfo = UserInfo.builder()
                 .id(UserUtil.getUserDetailsDTO().getUserInfoId())
                 .email(emailVO.getEmail())
@@ -99,12 +101,17 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateUserSubscribe(SubscribeVO subscribeVO) {
-        UserInfo temp = userInfoMapper.selectOne(new LambdaQueryWrapper<UserInfo>().eq(UserInfo::getId, subscribeVO.getUserId()));
+        // 强制使用当前登录用户，防止越权修改他人订阅状态
+        Integer userId = UserUtil.getUserDetailsDTO().getUserInfoId();
+        UserInfo temp = userInfoMapper.selectById(userId);
+        if (Objects.isNull(temp)) {
+            throw new BizException("用户不存在！");
+        }
         if (StringUtils.isEmpty(temp.getEmail())) {
             throw new BizException("邮箱未绑定！");
         }
         UserInfo userInfo = UserInfo.builder()
-                .id(subscribeVO.getUserId())
+                .id(userId)
                 .isSubscribe(subscribeVO.getIsSubscribe())
                 .build();
         userInfoMapper.updateById(userInfo);
@@ -155,15 +162,22 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
                 .collect(Collectors.toList());
         int fromIndex = getLimitCurrent().intValue();
         int size = getSize().intValue();
-        int toIndex = onlineUsers.size() - fromIndex > size ? fromIndex + size : onlineUsers.size();
+        fromIndex = Math.min(fromIndex, onlineUsers.size());
+        int toIndex = Math.min(fromIndex + size, onlineUsers.size());
         List<UserOnlineDTO> userOnlineList = onlineUsers.subList(fromIndex, toIndex);
         return new PageResultDTO<>(userOnlineList, onlineUsers.size());
     }
 
     @Override
     public void removeOnlineUser(Integer userInfoId) {
-        Integer userId = userAuthMapper.selectOne(new LambdaQueryWrapper<UserAuth>().eq(UserAuth::getUserInfoId, userInfoId)).getId();
-        tokenService.delLoginUser(userId);
+        // 同一 userInfo 可能绑定多个登录账号，取第一条，避免 selectOne 抛 TooManyResultsException
+        UserAuth userAuth = userAuthMapper.selectList(new LambdaQueryWrapper<UserAuth>()
+                        .eq(UserAuth::getUserInfoId, userInfoId))
+                .stream().findFirst().orElse(null);
+        if (Objects.isNull(userAuth)) {
+            return;
+        }
+        tokenService.delLoginUser(userAuth.getId());
     }
 
     @Override

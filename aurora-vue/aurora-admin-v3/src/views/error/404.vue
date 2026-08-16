@@ -27,7 +27,7 @@ const goHome = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f5f6fb;
+  background-color: #f1f3f9;
 }
 
 .not-found-content {
@@ -36,7 +36,7 @@ const goHome = () => {
 
 .not-found-content h1 {
   font-size: 120px;
-  color: #409EFF;
+  color: #e93796;
   margin-bottom: 20px;
   font-weight: bold;
 }

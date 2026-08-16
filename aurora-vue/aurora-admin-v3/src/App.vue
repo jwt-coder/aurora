@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
 import { useWebsiteStore } from '@/store/modules/website'
@@ -21,40 +21,43 @@ const websiteStore = useWebsiteStore()
 
 const naiveThemeOverrides = {
   common: {
-    primaryColor: '#409EFF',
-    primaryColorHover: '#66B1FF',
-    primaryColorPressed: '#3A8EE6',
-    primaryColorSuppl: '#409EFF'
+    primaryColor: '#e93796',
+    primaryColorHover: '#f2539f',
+    primaryColorPressed: '#cf2d84',
+    primaryColorSuppl: '#e93796',
+    borderRadius: '8px',
+    borderRadiusSmall: '6px'
   }
 }
 
-// 动态更新favicon和页面标题
-onMounted(async () => {
-  // 如果是登录页，不需要获取网站配置
-  if (route.path === '/login') {
-    document.title = '登录 - 后台管理系统'
-    return
+// 根据路由和网站配置应用标题与favicon
+// watch 而非 onMounted：登录后是 SPA 内部跳转，onMounted 不会再触发，配置到位时需自动应用
+const applyBranding = () => {
+  const name = websiteStore.getName || '后台管理系统'
+  document.title = route.path === '/login' ? `登录 - ${name}` : `${name} - 后台管理`
+
+  const faviconUrl = websiteStore.getFavicon
+  if (faviconUrl) {
+    document.querySelectorAll("link[rel*='icon']").forEach(link => link.remove())
+    const link = document.createElement('link')
+    link.rel = 'icon'
+    link.href = faviconUrl
+    document.getElementsByTagName('head')[0].appendChild(link)
   }
+}
+
+watch(
+  () => [route.path, websiteStore.getName, websiteStore.getFavicon],
+  applyBranding,
+  { immediate: true }
+)
+
+// 动态获取网站配置（登录页配置接口未授权会静默失败，登录后由侧边栏拉取，watcher 自动应用）
+onMounted(async () => {
+  if (route.path === '/login') return
 
   try {
     await websiteStore.fetchWebsiteConfig()
-
-    // 更新favicon
-    const faviconUrl = websiteStore.getFavicon
-    if (faviconUrl) {
-      // 移除所有现有的 favicon links
-      const existingLinks = document.querySelectorAll("link[rel*='icon']")
-      existingLinks.forEach(link => link.remove())
-
-      // 添加新的 favicon
-      const link = document.createElement('link')
-      link.rel = 'icon'
-      link.href = faviconUrl
-      document.getElementsByTagName('head')[0].appendChild(link)
-    }
-
-    // 更新页面标题
-    document.title = '后台管理系统'
   } catch (error) {
     // 对于40001（未登录）错误，静默处理
     if (error.code !== 40001) {

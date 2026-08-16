@@ -188,6 +188,8 @@ async function handleSubmit() {
 function handleDelete(id) {
   deleteTagApi([id]).then(() => {
     message.success('删除成功')
+    // 删除后如果当前页只剩这一条且不是第一页，回退一页
+    if (tagList.value.length === 1 && pagination.page > 1) pagination.page--
     fetchTags()
   }).catch(err => {
     console.error('删除失败:', err)

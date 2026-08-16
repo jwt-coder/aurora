@@ -62,7 +62,7 @@
           <n-upload
             :action="uploadAction"
             :headers="uploadHeaders"
-            :default-file-list="uploads"
+            v-model:file-list="uploads"
             :max="10"
             list-type="image-card"
             accept="image/*"
@@ -129,9 +129,16 @@ function fetchTalkDetail() {
     isTop.value = talk.isTop
     statusText.value = talk.status === 1 ? '公开' : '私密'
 
-    // 处理图片列表
-    if (res.data.imgs && res.data.imgs.length > 0) {
-      uploads.value = res.data.imgs.map(url => ({
+    // 处理图片列表（后端 images 为 JSON 字符串，容错解析）
+    let imgUrls = []
+    try {
+      const parsed = res.data.images ? JSON.parse(res.data.images) : []
+      if (Array.isArray(parsed)) imgUrls = parsed
+    } catch (e) {
+      imgUrls = []
+    }
+    if (imgUrls.length > 0) {
+      uploads.value = imgUrls.map(url => ({
         id: url,
         name: url.split('/').pop(),
         status: 'finished',
@@ -168,12 +175,19 @@ function handleUploadFinish({ file, event }) {
   try {
     const response = JSON.parse(event.target.response)
     if (response.flag) {
-      uploads.value.push({
-        id: response.data,
+      const entry = {
+        id: file.id,
         name: file.name,
         status: 'finished',
         url: response.data
-      })
+      }
+      // v-model:file-list 下组件已把 file 加入列表，原地替换；顶部按钮上传则 push
+      const index = uploads.value.findIndex(item => item.id === file.id)
+      if (index > -1) {
+        uploads.value.splice(index, 1, entry)
+      } else {
+        uploads.value.push(entry)
+      }
       message.success('上传成功')
     } else {
       message.error(response.message || '上传失败')

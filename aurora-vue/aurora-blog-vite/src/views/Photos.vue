@@ -63,6 +63,7 @@ export default defineComponent({
       photos: [] as any,
       current: 1,
       size: 10,
+      loading: false,
       albumId: route.params.albumId
     })
     onBeforeRouteUpdate((to) => {
@@ -77,11 +78,17 @@ export default defineComponent({
       v3ImgPreviewFn({ images: reactiveData.photos, index })
     }
     const loadDataFromServer = () => {
+      // 防抖：上一次请求未返回时不重复请求，否则同一页会被追加两遍（重复图片）
+      if (reactiveData.loading) return
+      reactiveData.loading = true
+      const albumId = reactiveData.albumId
       let params = {
         current: reactiveData.current,
         size: reactiveData.size
       }
-      api.getPhotosBuAlbumId(reactiveData.albumId, params).then(({ data }) => {
+      api.getPhotosBuAlbumId(albumId, params).then(({ data }) => {
+        // 请求期间已切换相册，丢弃过期响应
+        if (reactiveData.albumId !== albumId) return
         if (data.data.photos.length > 0) {
           reactiveData.current++
           reactiveData.photoAlbumName = data.data.photoAlbumName
@@ -89,6 +96,8 @@ export default defineComponent({
         } else {
           reactiveData.noResult = true
         }
+      }).finally(() => {
+        reactiveData.loading = false
       })
     }
     return {
@@ -103,24 +112,19 @@ export default defineComponent({
 </script>
 <style lang="scss" scoped>
 .photo-wrap {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
 }
 .photo {
-  margin: 3px;
-  cursor: pointer;
-  flex-grow: 1;
+  width: 100%;
+  height: 220px;
   object-fit: cover;
-  height: 200px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: opacity 0.2s ease;
 }
-.photo-wrap::after {
-  content: '';
-  display: block;
-  flex-grow: 9999;
-}
-@media (max-width: 759px) {
-  .photo {
-    width: 100%;
-  }
+.photo:hover {
+  opacity: 0.85;
 }
 </style>
