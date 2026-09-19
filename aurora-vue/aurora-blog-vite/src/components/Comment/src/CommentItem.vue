@@ -9,7 +9,7 @@
           <div class="flex justify-between mt-3 text-xs text-gray-400 space-x-3 md:space-x-16">
             <span>{{ comment.nickname }} | {{ time }}</span>
             <div>
-              <span @click="clickOnReply" class="cursor-pointer reply-button">Reply</span>
+              <span @click="clickOnReply" class="cursor-pointer reply-button">{{ t('comment.reply') }}</span>
             </div>
           </div>
         </div>
@@ -35,6 +35,7 @@ import { defineComponent, reactive, ref, toRefs, provide } from 'vue'
 import Avatar from '@/components/Avatar.vue'
 import CommentReplyItem from './CommentReplyItem.vue'
 import CommentReplyForm from './CommentReplyForm.vue'
+import { useI18n } from 'vue-i18n'
 
 export default defineComponent({
   components: {
@@ -44,6 +45,7 @@ export default defineComponent({
   },
   props: ['comment', 'index'],
   setup(props) {
+    const { t } = useI18n()
     const comment: any = props.comment
     provide('parentId', comment.id)
     provide('index', props.index)
@@ -63,13 +65,14 @@ export default defineComponent({
       reactiveData.show = false
     }
     const clickOnReply = () => {
-      reactiveData.replyContent = 'add reply...'
+      reactiveData.replyContent = t('comment.reply_placeholder')
       reactiveData.show = true
     }
     return {
       ...toRefs(reactiveData),
       clickOnReply,
-      changeShow
+      changeShow,
+      t
     }
   }
 })

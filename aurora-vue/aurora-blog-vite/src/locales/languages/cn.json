@@ -119,5 +119,21 @@
     "upload": "上传",
     "uploading": "上传中",
     "cancel": "取消"
+  },
+  "comment": {
+    "placeholder": "写下你的评论...",
+    "submit": "发表评论",
+    "reply": "回复",
+    "reply_placeholder": "写下你的回复...",
+    "reply_submit": "回复",
+    "cancel": "取消",
+    "load_more": "加载更多",
+    "need_login": "请登录后评论",
+    "need_login_reply": "请登录后回复",
+    "empty": "评论不能为空",
+    "empty_reply": "回复不能为空",
+    "success": "评论成功",
+    "success_reply": "回复成功",
+    "success_review": "评论成功，正在审核中"
   }
 }

@@ -211,6 +211,17 @@ import { useCommentStore } from '@/stores/comment'
 import { useUserStore } from '@/stores/user'
 import Sticky from '@/components/Sticky.vue'
 import Prism from 'prismjs'
+import 'prismjs/components/prism-markup'
+import 'prismjs/components/prism-css'
+import 'prismjs/components/prism-clike'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/components/prism-typescript'
+import 'prismjs/components/prism-java'
+import 'prismjs/components/prism-bash'
+import 'prismjs/components/prism-json'
+import 'prismjs/components/prism-yaml'
+import 'prismjs/components/prism-python'
+import 'prismjs/components/prism-sql'
 import tocbot from 'tocbot'
 import emitter from '@/utils/mitt'
 import { v3ImgPreviewFn } from 'v3-img-preview'
@@ -302,6 +313,49 @@ export default defineComponent({
     const handlePreview = (index: any) => {
       v3ImgPreviewFn({ images: reactiveData.images, index: reactiveData.images.indexOf(index) })
     }
+    /** 代码块：标题栏（mac 圆点 + 语言 + 复制），与正文代码区分开 */
+    const decorateCodeBlocks = () => {
+      const root = articleRef.value
+      if (!root) return
+      const pres = root.querySelectorAll('pre')
+      pres.forEach((pre) => {
+        if (pre.querySelector('.code-block-header')) return
+        const codeEl = pre.querySelector('code')
+        const classStr = `${pre.className || ''} ${codeEl?.className || ''}`
+        const langMatch = classStr.match(/language-([\w+#-]+)/)
+        const lang = langMatch ? langMatch[1] : 'code'
+        const header = document.createElement('div')
+        header.className = 'code-block-header'
+        const dots = document.createElement('span')
+        dots.className = 'code-block-dots'
+        dots.setAttribute('aria-hidden', 'true')
+        const langEl = document.createElement('span')
+        langEl.className = 'code-block-lang'
+        langEl.textContent = lang
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'code-block-copy'
+        btn.textContent = '复制'
+        btn.addEventListener('click', async () => {
+          const text = codeEl ? codeEl.innerText : pre.innerText
+          try {
+            await navigator.clipboard.writeText(text)
+            btn.textContent = '已复制'
+          } catch (e) {
+            btn.textContent = '复制失败'
+          }
+          setTimeout(() => {
+            btn.textContent = '复制'
+          }, 1600)
+        })
+        header.appendChild(dots)
+        header.appendChild(langEl)
+        header.appendChild(btn)
+        pre.insertBefore(header, pre.firstChild)
+        pre.classList.add('code-block')
+      })
+    }
+
     const initTocbot = () => {
       let nodes = articleRef.value.children
       if (nodes.length) {
@@ -363,6 +417,7 @@ export default defineComponent({
             loading.value = false
             nextTick(() => {
               Prism.highlightAll()
+              decorateCodeBlocks()
               initTocbot()
             })
           } else {

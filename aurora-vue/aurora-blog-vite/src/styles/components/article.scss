@@ -174,432 +174,486 @@
   }
 }
 
+/* 正文结构对齐 admin 预览，配色贴合 Aurora（青 → 紫 → 粉） */
 .post-html {
-  @apply bg-ob-deep-800 p-4 lg:p-14 rounded-2xl shadow-xl mb-8 lg:mb-0;
+  /* light：底板偏冷白，代码区带一点 aurora 粉/青边；正文用近黑，保证可读 */
+  --post-bg: #ffffff;
+  --post-fg: #111111;
+  --post-heading: #0a0a0a;
+  --post-muted: #111111;
+  --post-quote-fg: #222222;
+  --post-border: #e6e9f2;
+  --post-inset: #f3f5fa;
+  --post-inset-border: rgba(233, 55, 150, 0.22);
+  --post-code-surface: #ffffff;
+  --post-code-bar: linear-gradient(90deg, rgba(36, 198, 220, 0.08), rgba(233, 55, 150, 0.1));
+  --post-table-alt: #f7f8fc;
+  --post-quote-bg: linear-gradient(135deg, rgba(36, 198, 220, 0.06), rgba(233, 55, 150, 0.06));
+  --post-shadow: 0 2px 12px rgba(84, 51, 255, 0.06);
+  --post-link: #e93796;
+  --post-link-hover: #0fb6d6;
+  --post-radius-s: 3px;
+  --post-radius-m: 8px;
+  --post-code-fg: #000000;
+  /* 浅色下不用灰色：注释/标点等一律黑色，避免“看不清” */
+  --post-token-comment: #000000;
+  --post-token-punct: #000000;
+  --post-token-keyword: #e93796;
+  --post-token-string: #0d9e9e;
+  --post-token-func: #547ce7;
+  --post-token-number: #5433ff;
+  --post-accent: #e93796;
+  --post-accent-2: #0fb6d6;
+
+  background: var(--post-bg);
+  color: var(--post-fg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: var(--post-shadow);
+  margin-bottom: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  line-height: 1.75;
+  word-wrap: break-word;
+  transition: background 0.25s ease, color 0.25s ease;
+
+  @media (min-width: 1024px) {
+    padding: 2rem 2.5rem;
+  }
+
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    @apply pt-7 pb-2 mb-4 text-ob-bright relative flex items-center;
+    color: var(--post-heading);
     font-weight: 600;
-    &:after {
-      @apply absolute bottom-0 h-1 w-24 rounded-full;
+    line-height: 1.4;
+    margin: 1.4em 0 0.6em;
+    display: block;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  h1,
+  h2 {
+    position: relative;
+    padding-bottom: 0.55rem;
+
+    &::after {
       content: '';
-      background: var(--main-gradient);
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 3.25rem;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #24c6dc, #5433ff 45%, #ff0099);
     }
   }
 
   h1 {
-    @apply text-3xl lg:text-4xl;
+    font-size: 1.75rem;
   }
 
   h2 {
-    @apply text-2xl lg:text-3xl;
+    font-size: 1.4rem;
   }
 
   h3 {
-    @apply text-xl lg:text-2xl;
+    font-size: 1.2rem;
   }
 
   h4 {
-    @apply text-lg lg:text-xl;
+    font-size: 1.08rem;
   }
 
   h5 {
-    @apply text-base lg:text-lg;
+    font-size: 1rem;
   }
 
   h6 {
-    @apply text-base;
+    font-size: 0.9rem;
+    color: var(--post-muted);
   }
 
   p {
-    @apply my-3 leading-loose;
+    margin: 0.85em 0;
+    line-height: 1.75;
   }
 
-  p img {
-    @apply mt-3 mb-3;
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--post-radius-m);
+    margin: 0.75rem 0;
   }
 
-  ul {
-    margin: 1.5rem 0;
+  a {
+    color: var(--post-link);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease;
   }
 
-  ul ul {
-    position: relative;
-    margin: 0;
-  }
-
-  ul > li > ul::before {
-    content: '';
-    border-left: 1px solid var(--text-accent);
-    position: absolute;
-    opacity: 0.35;
-    left: -1em;
-    top: 0;
-    bottom: 0;
-  }
-
-  ul li,
-  ol li {
-    @apply mb-3 leading-loose;
-    margin-left: 2rem;
-  }
-
-  /* bullet lists */
-  ul,
-  ul ul,
-  ol ul,
-  ul ul ul,
-  ol ul ul {
-    list-style: none;
-  }
-
-  li > p {
-    display: inline-block;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-
-  ul li::before {
-    @apply float-left;
-    content: '•';
-    color: var(--text-accent);
-    display: inline-block;
-    width: 1em;
-    margin-left: -1.15em;
-    padding: 0;
-    font-weight: bold;
-    text-shadow: 0 0 0.5em var(--accent-2);
-  }
-
-  ul ul li::before {
-    content: '•';
-  }
-
-  ul ul ul li::before {
-    content: '•';
-  }
-
-  /* numbered lists */
-  ol {
-    list-style: none;
-    counter-reset: li;
-  }
-
-  ol > li {
-    counter-increment: li;
-  }
-
-  ol > li::before,
-  ul ol > li::before,
-  ul ul ol > li::before,
-  ul ul ul ol > li::before {
-    content: '.' counter(li);
-    color: var(--text-accent);
-    font-weight: normal;
-    display: inline-block;
-    width: 1em;
-    margin-left: -1.5em;
-    margin-right: 0.5em;
-    text-align: right;
-    direction: rtl;
-    overflow: visible;
-    word-break: keep-all;
-    white-space: nowrap;
-  }
-
-  /* Remove blockquote left margin */
-  blockquote {
-    margin-inline-start: 0;
-  }
-
-  .custom-quote,
-  blockquote {
-    position: relative;
-    padding: 0.5rem 1rem 0.5rem 2rem;
-    color: var(--text-normal);
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    margin-bottom: 2em;
-    margin-top: 2em;
-    margin-right: 0 !important;
-    border-left: 3px var(--text-accent) solid;
-    border-top: transparent;
-    border-bottom: transparent;
-    border-right: transparent;
-    background: linear-gradient(
-      135deg,
-      var(--background-primary),
-      var(--background-primary) 41.07%,
-      var(--background-secondary) 76.05%,
-      var(--background-secondary)
-    );
-  }
-
-  .custom-quote::before,
-  blockquote::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0px;
-    height: 2px;
-    width: 76%;
-    background: linear-gradient(90deg, var(--text-accent), var(--background-secondary) 76.05%);
-  }
-
-  .custom-quote::after,
-  blockquote::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0px;
-    height: 2px;
-    width: 45%;
-    background: linear-gradient(90deg, var(--text-accent), var(--background-primary) 45%);
-  }
-
-  .custom-quote-svg,
-  .custom-blockquote-svg {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    top: -0.65rem;
-    left: -1rem;
-    height: 2.3rem;
-    width: 2.3rem;
-    fill: currentColor;
-    stroke: var(--background-secondary);
-    overflow: hidden;
-    svg {
-      height: 100%;
-      width: 100%;
-    }
-  }
-
-  .custom-blockquote-svg {
-    color: var(--text-accent);
-  }
-
-  .custom-quote.tip .custom-quote-svg {
-    color: var(--custom-quote-tip);
-  }
-
-  .custom-quote.tip {
-    .custom-quote-title {
-      color: var(--custom-quote-tip);
-    }
-    border-left: 3px solid var(--custom-quote-tip) !important;
-  }
-
-  .custom-quote.tip::before {
-    background: linear-gradient(90deg, var(--custom-quote-tip), var(--background-primary));
-  }
-
-  .custom-quote.tip::after {
-    background: linear-gradient(90deg, var(--custom-quote-tip), var(--background-primary));
-  }
-
-  .custom-quote.warning .custom-quote-svg {
-    color: var(--custom-quote-warning);
-  }
-
-  .custom-quote.warning {
-    .custom-quote-title {
-      color: var(--custom-quote-warning);
-    }
-    border-left: 3px solid var(--custom-quote-warning) !important;
-  }
-
-  .custom-quote.warning::before {
-    background: linear-gradient(90deg, var(--custom-quote-warning), var(--background-primary));
-  }
-
-  .custom-quote.warning::after {
-    background: linear-gradient(90deg, var(--custom-quote-warning), var(--background-primary));
-  }
-
-  .custom-quote.danger .custom-quote-svg {
-    color: var(--custom-quote-danger);
-  }
-
-  .custom-quote.danger {
-    .custom-quote-title {
-      color: var(--custom-quote-danger);
-    }
-    border-left: 3px solid var(--custom-quote-danger) !important;
-  }
-
-  .custom-quote.danger::before {
-    background: linear-gradient(90deg, var(--custom-quote-danger), var(--background-primary));
-  }
-
-  .custom-quote.danger::after {
-    background: linear-gradient(90deg, var(--custom-quote-danger), var(--background-primary));
-  }
-
-  .custom-details {
-    @apply rounded-xl;
-    padding: 1rem;
-    background: linear-gradient(
-      135deg,
-      var(--background-primary),
-      var(--background-primary) 41.07%,
-      var(--background-secondary) 76.05%,
-      var(--background-secondary)
-    );
-    summary {
-      @apply rounded-lg cursor-pointer transition-all;
-      -webkit-touch-callout: none; /* iOS Safari */
-      -webkit-user-select: none; /* Safari */
-      -khtml-user-select: none; /* Konqueror HTML */
-      -moz-user-select: none; /* Old versions of Firefox */
-      -ms-user-select: none; /* Internet Explorer/Edge */
-      user-select: none; /* Non-prefixed version, currently */
-      padding: 0.5rem 1.2rem;
-      background: linear-gradient(135deg, var(--bg-accent-55), transparent 46.07%);
-      opacity: 1;
-      &:hover {
-        opacity: 0.6;
-      }
-    }
+  a:hover {
+    color: var(--post-link-hover);
+    border-bottom-color: var(--post-link-hover);
   }
 
   strong {
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    padding: 0 0.1rem;
-    color: #7aa2f7;
-    background-color: #7aa2f7;
-    background-image: var(--strong-gradient);
+    font-weight: 600;
+    color: var(--post-heading);
   }
 
-  strong::selection {
-    -webkit-text-fill-color: var(--text-faint);
+  em {
+    font-style: italic;
+    color: inherit;
+    font-family: inherit;
+  }
+
+  ul,
+  ol {
+    padding-left: 1.75rem;
+    margin: 0.85em 0;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+
+  li {
+    margin: 0.35em 0;
+    line-height: 1.75;
+  }
+
+  li::before {
+    content: none;
+  }
+
+  ul ul {
+    list-style: circle;
+  }
+
+  ul ul ul {
+    list-style: square;
+  }
+
+  blockquote {
+    margin: 1em 0;
+    padding: 0.65em 1em;
+    color: var(--post-quote-fg);
+    border-left: 3px solid transparent;
+    border-image: linear-gradient(180deg, #24c6dc, #5433ff, #ff0099) 1;
+    background: var(--post-quote-bg);
+    border-radius: 0;
+  }
+
+  blockquote::before,
+  blockquote::after {
+    content: none;
+  }
+
+  hr {
+    border: none;
+    height: 0;
+    margin: 1.5em 0;
+    border-top: 1px solid var(--post-border);
+    padding: 0;
+  }
+
+  hr::before,
+  hr::after {
+    content: none;
   }
 
   table {
     border-collapse: collapse;
-    margin: 1rem 0;
+    margin: 1em 0;
+    width: 100%;
+    display: table;
+    overflow-x: auto;
+  }
+
+  th,
+  td {
+    border: 1px solid var(--post-border);
+    padding: 0.5em 0.85em;
+  }
+
+  th {
+    background: rgba(233, 55, 150, 0.06);
+    font-weight: 600;
+    color: var(--post-heading);
+  }
+
+  tr:nth-child(2n) {
+    background: var(--post-table-alt);
+  }
+
+  /* 行内代码：淡粉底，和主题呼应 */
+  :not(pre) > code {
+    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+      monospace;
+    font-size: 0.88em;
+    padding: 0.12em 0.45em;
+    margin: 0;
+    border-radius: var(--post-radius-s);
+    background: rgba(233, 55, 150, 0.08);
+    border: 1px solid rgba(233, 55, 150, 0.2);
+    color: #c41a7f;
+    word-break: break-word;
+  }
+
+  /* 代码块窗口：标题栏（圆点/语言/复制）与代码区分离 */
+  pre,
+  pre.code-block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 1.2em 0;
+    padding: 0;
+    border-radius: var(--post-radius-m);
+    background: var(--post-code-surface);
+    border: 1px solid var(--post-inset-border);
+    overflow: hidden;
+    overflow-wrap: normal;
+    box-shadow: none;
+  }
+
+  /* 无 JS 标题栏时的兜底：给圆点留出空隙，避免贴住代码 */
+  pre:not(.code-block) {
+    padding: 2.5rem 1.15rem 1rem;
+  }
+
+  pre:not(.code-block)::before {
+    content: '';
+    position: absolute;
+    top: 0.95rem;
+    left: 1rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow:
+      15px 0 0 #febc2e,
+      30px 0 0 #28c840;
+    opacity: 0.92;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 12px 0 14px;
+    background: var(--post-code-bar);
+    border-bottom: 1px solid var(--post-inset-border);
+    user-select: none;
+  }
+
+  .code-block-dots {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow:
+      15px 0 0 #febc2e,
+      30px 0 0 #28c840;
+    margin-right: 28px;
+    flex-shrink: 0;
+  }
+
+  .code-block-lang {
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    color: var(--post-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .code-block-copy {
+    flex-shrink: 0;
+    border: 1px solid var(--post-inset-border);
+    background: transparent;
+    color: var(--post-accent);
+    font-size: 12px;
+    line-height: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  }
+
+  pre.code-block:hover .code-block-copy,
+  .code-block-header:hover .code-block-copy,
+  .code-block-copy:focus {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .code-block-copy:hover {
+    background: var(--post-accent);
+    color: #fff;
+  }
+
+  pre code,
+  pre.code-block code {
+    padding: 1rem 1.15rem 1.15rem;
+    margin: 0;
+    background: transparent;
+    border: none;
+    color: var(--post-code-fg);
+    font-size: 0.875em;
+    line-height: 1.65;
     display: block;
     overflow-x: auto;
   }
 
+  pre[class*='language-'] code,
+  pre[class*='language-'] {
+    background: transparent !important;
+  }
+
+  /* 语法高亮：交给 token 类，不要再把整块 code 锁成单色 */
+  .token.comment,
+  .token.prolog,
+  .token.doctype,
+  .token.cdata {
+    color: var(--post-token-comment) !important;
+    font-style: italic;
+  }
+
+  .token.punctuation {
+    color: var(--post-token-punct) !important;
+  }
+
+  .token.keyword,
+  .token.selector,
+  .token.important,
+  .token.atrule,
+  .token.operator {
+    color: var(--post-token-keyword) !important;
+  }
+
+  .token.string,
+  .token.char,
+  .token.attr-value,
+  .token.regex {
+    color: var(--post-token-string) !important;
+  }
+
+  .token.function,
+  .token.class-name {
+    color: var(--post-token-func) !important;
+  }
+
+  .token.number,
+  .token.boolean,
+  .token.constant,
+  .token.symbol {
+    color: var(--post-token-number) !important;
+  }
+
+  .token.tag,
+  .token.attr-name {
+    color: var(--post-token-keyword) !important;
+  }
+
+  .token.property,
+  .token.variable {
+    color: var(--post-token-func) !important;
+  }
+
+  /* 浅色主题：prism 默认里偏灰的 token 一律压成黑色，避免发灰看不清 */
+  pre.code-block .token.operator,
+  pre.code-block .token.entity,
+  pre.code-block .token.url,
+  pre.code-block .token.namespace,
+  pre.code-block .token.deleted,
+  pre.code-block .token.inserted,
+  pre.code-block .token.bold,
+  pre.code-block .token.italic,
+  pre.code-block .token.comment,
+  pre.code-block .token.prolog,
+  pre.code-block .token.doctype,
+  pre.code-block .token.cdata,
+  pre.code-block .token.punctuation,
+  pre.code-block .token.plain {
+    color: var(--post-code-fg) !important;
+    font-style: normal;
+  }
+
+  &.security {
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0.5rem 0;
+    }
+  }
+}
+
+/* 暗色：正文更深，代码块用紫青调，与 Aurora 渐变一致 */
+body.theme-dark .post-html,
+.theme-dark .post-html {
+  --post-bg: #12121a;
+  --post-fg: #d5d7e0;
+  --post-heading: #f4f5fa;
+  --post-muted: #9aa0b4;
+  --post-quote-fg: #b8bdd0;
+  --post-border: #2a2b38;
+  --post-inset: #1a1b26;
+  --post-inset-border: rgba(36, 198, 220, 0.28);
+  --post-code-surface: #15161f;
+  --post-code-bar: linear-gradient(90deg, rgba(36, 198, 220, 0.12), rgba(244, 86, 157, 0.1));
+  --post-table-alt: #181922;
+  --post-quote-bg: linear-gradient(135deg, rgba(36, 198, 220, 0.08), rgba(255, 0, 153, 0.06));
+  --post-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+  --post-link: #f4569d;
+  --post-link-hover: #0fb6d6;
+  --post-code-fg: #e8eaf2;
+  --post-token-comment: #8b93a7;
+  --post-token-punct: #a8adc0;
+  --post-token-keyword: #ff6bb5;
+  --post-token-string: #5fd4c8;
+  --post-token-func: #8ab4ff;
+  --post-token-number: #b8a1ff;
+  --post-accent: #f4569d;
+  --post-accent-2: #0fb6d6;
+
   th {
-    border: 1px solid var(--background-primary-alt) !important;
-    background-color: var(--background-secondary);
+    background: rgba(244, 86, 157, 0.1);
   }
 
-  td,
-  th {
-    border: 1px solid var(--background-primary-alt) !important;
-    padding: 0.6em 1em;
+  :not(pre) > code {
+    background: rgba(244, 86, 157, 0.12);
+    border-color: rgba(244, 86, 157, 0.28);
+    color: #ffb3d4;
   }
 
-  tr {
-    border-top: 1px solid var(--background-primary-alt) !important;
-    background-color: var(--background-primary);
+  h1,
+  h2 {
+    &::after {
+      background: linear-gradient(90deg, #0fb6d6, #7a52e8 45%, #f4569d);
+    }
   }
 
-  tr:nth-child(2n) {
-    background-color: var(--background-secondary);
-  }
-
-  em {
-    color: #bb9af7 !important;
-    font-family: OperatorMonoSSmLig-Book, Rubik !important;
-  }
-
-  a {
-    text-shadow: -1px -1px 2px var(--background-primary), -1px 1px 2px var(--background-primary),
-      1px -1px 2px var(--background-primary), 1px 1px 2px var(--background-primary);
-    -webkit-text-fill-color: var(--text-bright);
-    background-position: 0 100%;
-    background-repeat: repeat-x;
-    background-size: 5px 5px;
-    text-decoration: none;
-    transition: all 350ms ease;
-    background-image: linear-gradient(to bottom, var(--bg-sub-accent-55) 0%, var(--bg-sub-accent-55) 100%);
-  }
-
-  a strong {
-    -webkit-background-clip: initial;
-    -webkit-text-fill-color: initial;
-    color: inherit;
-    background-color: initial;
-    background-image: none;
-  }
-
-  a:hover {
-    text-shadow: -1px -1px 2px var(--background-modifier-border), -1px 1px 2px var(--background-modifier-border),
-      1px -1px 2px var(--background-modifier-border), 1px 1px 2px var(--background-modifier-border);
-    -webkit-text-fill-color: var(--text-bright);
-    background-size: 4px 50px;
-  }
-
-  svg {
-    display: inline-block;
-  }
-
-  hr {
-    position: relative;
-    margin-block-start: 0;
-    margin-block-end: 0;
-    border: none;
-    height: 1px;
-    padding: 2.5em 0;
-  }
-
-  hr::before {
-    content: '§';
-    display: inline-block;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, -44%) rotate(60deg);
-    transform-origin: 50% 50%;
-    padding: 0.25rem;
-    color: var(--text-sub-accent);
-    background-color: var(--background-secondary);
-    z-index: 10;
-    border-radius: 60%;
-  }
-
-  hr::after {
-    position: absolute;
-    content: '';
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--main-gradient);
-    height: 3px;
-    width: 26%;
-    border-radius: 9999px;
-    opacity: 0.26;
-    margin: 2.5em auto;
-  }
-
-  pre {
-    overflow: auto !important;
-    overflow-wrap: normal !important;
-  }
-
-  pre code {
-    padding: 0;
-  }
-
-  code {
-    color: var(--text-normal);
-    margin: 0;
-    border-radius: 3px;
-    overflow-wrap: break-word;
-    background-color: var(--bg-accent-05);
-    word-wrap: break-word;
-    padding: 0.1rem 0.3rem;
-    border-radius: 0.3rem;
-    color: var(--text-accent) !important;
+  blockquote {
+    border-image: linear-gradient(180deg, #0fb6d6, #7a52e8, #f4569d) 1;
   }
 }
 

@@ -5,7 +5,7 @@
       <textarea
         v-model="commentContent"
         class="w-full shadow-md rounded-md p-4 focus:outline-none input"
-        placeholder="Add comment..."
+        :placeholder="t('comment.placeholder')"
         cols="30"
         rows="5" />
       <div class="justify-between" style="text-align: right">
@@ -13,7 +13,7 @@
           @click="saveComment"
           id="submit-button"
           class="mt-5 w-32 text-white p-2 rounded-lg shadow-lg transition transform hover:scale-105 flex float-right">
-          <span class="text-center flex-grow commit">Add Comment</span>
+          <span class="text-center flex-grow commit">{{ t('comment.submit') }}</span>
         </button>
       </div>
       <div class="w-full border-b-2 mt-6 wire"></div>
@@ -28,6 +28,7 @@ import { useUserStore } from '@/stores/user'
 import { useRoute } from 'vue-router'
 import { useCommentStore } from '@/stores/comment'
 import { useAppStore } from '@/stores/app'
+import { useI18n } from 'vue-i18n'
 import api from '@/api/api'
 import emitter from '@/utils/mitt'
 
@@ -36,6 +37,7 @@ export default defineComponent({
   components: { SubTitle, Avatar },
   setup() {
     const proxy: any = getCurrentInstance()?.appContext.config.globalProperties
+    const { t } = useI18n()
     const userStore = useUserStore()
     const commentStore = useCommentStore()
     const appStore = useAppStore()
@@ -47,7 +49,7 @@ export default defineComponent({
       if (userStore.userInfo === '') {
         proxy.$notify({
           title: 'Warning',
-          message: '请登录后评论',
+          message: t('comment.need_login'),
           type: 'warning'
         })
         return
@@ -55,7 +57,7 @@ export default defineComponent({
       if (reactiveData.commentContent.trim() == '') {
         proxy.$notify({
           title: 'Warning',
-          message: '评论不能为空',
+          message: t('comment.empty'),
           type: 'warning'
         })
         return
@@ -74,13 +76,13 @@ export default defineComponent({
           if (isCommentReview) {
             proxy.$notify({
               title: 'Warning',
-              message: '评论成功,正在审核中',
+              message: t('comment.success_review'),
               type: 'warning'
             })
           } else {
             proxy.$notify({
               title: 'Success',
-              message: '评论成功',
+              message: t('comment.success'),
               type: 'success'
             })
           }
@@ -109,7 +111,8 @@ export default defineComponent({
     return {
       ...toRefs(reactiveData),
       avatar: computed(() => userStore.userInfo.avatar),
-      saveComment
+      saveComment,
+      t
     }
   }
 })

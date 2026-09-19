@@ -119,5 +119,21 @@
     "upload": "Upload",
     "uploading": "Uploading",
     "cancel": "Cancel"
+  },
+  "comment": {
+    "placeholder": "Add comment...",
+    "submit": "Add Comment",
+    "reply": "Reply",
+    "reply_placeholder": "Write a reply...",
+    "reply_submit": "Reply",
+    "cancel": "Cancel",
+    "load_more": "Load More",
+    "need_login": "Please log in to comment",
+    "need_login_reply": "Please log in to reply",
+    "empty": "Comment cannot be empty",
+    "empty_reply": "Reply cannot be empty",
+    "success": "Comment submitted",
+    "success_reply": "Reply submitted",
+    "success_review": "Comment submitted, pending review"
   }
 }
