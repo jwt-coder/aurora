@@ -13,6 +13,7 @@ import { registerObSkeleton } from '@/components/LoadingSkeleton'
 import 'prismjs/themes/prism.css'
 import 'prismjs'
 import 'element-plus/theme-chalk/index.css'
+import '@/styles/element-plus.scss'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import infiniteScroll from 'vue3-infinite-scroll-better'
 import v3ImgPreview from 'v3-img-preview'
@@ -44,7 +45,10 @@ axios.interceptors.request.use((config: any) => {
   if (config.url && config.url.startsWith('/')) {
     config.url = document.location.origin + config.url
   }
-  config.headers['Authorization'] = 'Bearer ' + sessionStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
+  if (token) {
+    config.headers['Authorization'] = 'Bearer ' + token
+  }
   return config
 })
 const proxy = app.config.globalProperties

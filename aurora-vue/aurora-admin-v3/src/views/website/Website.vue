@@ -380,13 +380,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { NIcon, useMessage } from 'naive-ui'
 import { AddOutline } from '@vicons/ionicons5'
 import { getWebsiteConfigApi, updateWebsiteConfigApi } from '@/api/website'
 import { getSystemConfigApi, updateSystemConfigApi } from '@/api/system'
+import { useWebsiteStore } from '@/store/modules/website'
 
 const message = useMessage()
+const websiteStore = useWebsiteStore()
 
 const activeTab = ref('info')
 const infoFormRef = ref(null)
@@ -394,9 +396,10 @@ const socialFormRef = ref(null)
 const otherFormRef = ref(null)
 const systemFormRef = ref(null)
 const uploadUrl = '/api/admin/config/images'
-const uploadHeaders = {
-  Authorization: 'Bearer ' + sessionStorage.getItem('token')
-}
+// 上传请求头（computed 动态读取，避免 token 变化后 headers 过期）
+const uploadHeaders = computed(() => ({
+  Authorization: 'Bearer ' + (sessionStorage.getItem('token') || '')
+}))
 
 const websiteConfig = reactive({
   authorAvatar: '',
@@ -546,6 +549,11 @@ function getUploadedImageUrl(file, event, fallback = '') {
     return response.data
   }
 
+  // 401/40001 说明登录态失效，给出基本提示
+  if (response && (response.code === 401 || response.code === 40001)) {
+    message.error('登录已过期，请重新登录')
+  }
+
   const fileUrl = [file?.fileUrl, file?.url].find((url) => (
     typeof url === 'string' &&
     url &&
@@ -611,6 +619,11 @@ function handleLoginBgSuccess({ file, event }) {
   message.success('登录背景上传成功')
 }
 
+// 保存成功后同步更新全局 website store，使侧边栏/标题/favicon 立即生效
+function syncWebsiteStore() {
+  websiteStore.fetchWebsiteConfig().catch(() => {})
+}
+
 function handleSaveWebsiteConfig() {
   const data = { ...websiteConfig }
   if (!validateImageUrls(data, ['authorAvatar', 'logo', 'favicon'])) return
@@ -622,6 +635,7 @@ function handleSaveWebsiteConfig() {
   updateWebsiteConfigApi(data).then(() => {
     message.success('保存网站配置成功')
     fetchWebsiteConfig()
+    syncWebsiteStore()
   }).catch(err => {
     console.error('保存配置失败:', err)
     message.error('保存配置失败')
@@ -639,6 +653,7 @@ function handleSaveSocialConfig() {
   updateWebsiteConfigApi(data).then(() => {
     message.success('保存社交配置成功')
     fetchWebsiteConfig()
+    syncWebsiteStore()
   }).catch(err => {
     console.error('保存配置失败:', err)
     message.error('保存配置失败')
@@ -656,6 +671,7 @@ function handleSaveOtherConfig() {
   updateWebsiteConfigApi(data).then(() => {
     message.success('保存其他配置成功')
     fetchWebsiteConfig()
+    syncWebsiteStore()
   }).catch(err => {
     console.error('保存配置失败:', err)
     message.error('保存配置失败')

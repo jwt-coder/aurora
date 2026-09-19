@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onActivated, h } from 'vue'
+import { ref, reactive, computed, onMounted, onActivated, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NTag, NImage, NSpace, NPopconfirm, NSwitch, NPagination, useMessage, useDialog } from 'naive-ui'
 import { getArticlesApi, deleteArticleApi, exportArticlesApi, updateArticleTopAndFeaturedApi } from '@/api/article'
@@ -136,10 +136,10 @@ const typeOptions = [
   { label: '翻译', value: 3 }
 ]
 
-// 上传请求头
-const uploadHeaders = {
-  Authorization: 'Bearer ' + sessionStorage.getItem('token')
-}
+// 上传请求头（computed 动态读取，避免 token 变化后 headers 过期）
+const uploadHeaders = computed(() => ({
+  Authorization: 'Bearer ' + (sessionStorage.getItem('token') || '')
+}))
 
 // 分页
 const pagination = reactive({
@@ -275,8 +275,10 @@ const columns = [
   }
 ]
 
-// 获取文章列表
+// 获取文章列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchArticlesRequestId = 0
 const fetchArticles = async () => {
+  const requestId = ++fetchArticlesRequestId
   loading.value = true
   try {
     const params = {
@@ -291,13 +293,17 @@ const fetchArticles = async () => {
     }
 
     const res = await getArticlesApi(params)
+    if (requestId !== fetchArticlesRequestId) return
     articles.value = res.data.records || []
     pagination.itemCount = res.data.count || res.data.total || 0
   } catch (error) {
+    if (requestId !== fetchArticlesRequestId) return
     console.error('获取文章列表失败:', error)
     message.error('获取文章列表失败')
   } finally {
-    loading.value = false
+    if (requestId === fetchArticlesRequestId) {
+      loading.value = false
+    }
   }
 }
 
@@ -427,6 +433,8 @@ const handleUploadFinish = ({ file, event }) => {
       setTimeout(() => {
         fetchArticles()
       }, 500)
+    } else if (response.code === 401 || response.code === 40001 || event.target.status === 401) {
+      message.error('登录已过期，请重新登录')
     } else {
       message.error(response.message || '导入失败')
     }
@@ -471,11 +479,11 @@ const handleToggleFeatured = async (row, value) => {
 }
 
 onMounted(() => {
-  fetchArticles()
   fetchCategories()
   fetchTags()
 })
 
+// keep-alive 缓存下每次激活都刷新列表数据
 onActivated(() => {
   fetchArticles()
 })

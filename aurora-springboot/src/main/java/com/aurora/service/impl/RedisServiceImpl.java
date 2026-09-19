@@ -44,6 +44,13 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public Set<String> keys(String pattern) {
+        // 使用 KEYS 命令按模式匹配（项目未封装 SCAN，当前用于在线用户列表等场景，key 数量小可接受；
+        // 若后续数据量增大建议改为 SCAN 游标遍历，避免阻塞 Redis）
+        return redisTemplate.keys(pattern);
+    }
+
+    @Override
     public Boolean del(String key) {
         return redisTemplate.delete(key);
     }

@@ -127,8 +127,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
-import { NButton, NSpace, NTag, NTree, NPagination, useMessage, useDialog } from 'naive-ui'
+import { ref, reactive, h, onActivated } from 'vue'
+import { NButton, NSpace, NTree, NPagination, useMessage, useDialog } from 'naive-ui'
 import { AddOutline, TrashOutline } from '@vicons/ionicons5'
 import { getRolesApi, getAllMenusApi, getAllResourcesApi, saveRoleApi, batchDeleteRolesApi } from '@/api/role'
 import dayjs from 'dayjs'
@@ -178,14 +178,6 @@ const columns = [
     width: 150
   },
   {
-    title: '权限标签',
-    key: 'roleLabel',
-    width: 150,
-    render: (row) => {
-      return h(NTag, {}, { default: () => row.roleName })
-    }
-  },
-  {
     title: '创建时间',
     key: 'createTime',
     width: 180,
@@ -218,20 +210,27 @@ const columns = [
   }
 ]
 
+// 获取角色列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchRoles() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getRolesApi({
     current: pagination.page,
     size: pagination.pageSize,
     keywords: keywords.value
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     roleList.value = res.data.records || []
     pagination.itemCount = res.data.count || 0
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取角色列表失败:', err)
     message.error('获取角色列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -372,9 +371,10 @@ function handlePageSizeChange(pageSize) {
   fetchRoles()
 }
 
-onMounted(() => {
-  fetchRoles()
+// keep-alive 缓存下每次激活都刷新列表数据（onActivated 首次挂载时也会触发）
+onActivated(() => {
   fetchMenus()
   fetchResources()
+  fetchRoles()
 })
 </script>

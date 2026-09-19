@@ -106,9 +106,10 @@ const statusOptions = [
 ]
 
 const uploadAction = '/api/admin/talks/images'
-const uploadHeaders = {
-  Authorization: 'Bearer ' + sessionStorage.getItem('token')
-}
+// 上传请求头（computed 动态读取，避免 token 变化后 headers 过期）
+const uploadHeaders = computed(() => ({
+  Authorization: 'Bearer ' + (sessionStorage.getItem('token') || '')
+}))
 
 // 是否是新建模式
 const isNewTalk = computed(() => {
@@ -189,6 +190,8 @@ function handleUploadFinish({ file, event }) {
         uploads.value.push(entry)
       }
       message.success('上传成功')
+    } else if (response.code === 401 || response.code === 40001 || event.target.status === 401) {
+      message.error('登录已过期，请重新登录')
     } else {
       message.error(response.message || '上传失败')
     }

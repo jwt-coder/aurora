@@ -2,11 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.aurora.mapper.UniqueViewMapper">
     <select id="listUniqueViews" resultType="com.aurora.model.dto.UniqueViewDTO">
+        <!-- 按天聚合：容忍历史数据中同一天存在多行（旧定时任务快照 + 实时累加）的情况 -->
         SELECT DATE_FORMAT(create_time, "%Y-%m-%d") as `day`,
-               views_count
+               SUM(views_count)                     as views_count
         FROM `t_unique_view`
         WHERE create_time &gt; #{startTime}
           AND create_time &lt;= #{endTime}
-        ORDER BY create_time
+        GROUP BY `day`
+        ORDER BY `day`
     </select>
 </mapper>

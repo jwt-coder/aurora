@@ -49,7 +49,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive, toRefs, provide, computed } from 'vue'
+import { defineComponent, onMounted, onUnmounted, reactive, toRefs, provide, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -94,16 +94,24 @@ export default defineComponent({
       'haveMore',
       computed(() => reactiveData.haveMore)
     )
-    emitter.on('talkFetchComment', () => {
+    const handleFetchComment = () => {
       pageInfo.current = 1
       reactiveData.isReload = true
       fetchComments()
-    })
-    emitter.on('talkFetchReplies', (index) => {
+    }
+    const handleFetchReplies = (index: any) => {
       fetchReplies(index)
-    })
-    emitter.on('talkLoadMore', () => {
+    }
+    const handleLoadMore = () => {
       fetchComments()
+    }
+    emitter.on('talkFetchComment', handleFetchComment)
+    emitter.on('talkFetchReplies', handleFetchReplies)
+    emitter.on('talkLoadMore', handleLoadMore)
+    onUnmounted(() => {
+      emitter.off('talkFetchComment', handleFetchComment)
+      emitter.off('talkFetchReplies', handleFetchReplies)
+      emitter.off('talkLoadMore', handleLoadMore)
     })
     const handlePreview = (index: any) => {
       v3ImgPreviewFn({ images: reactiveData.images, index: reactiveData.images.indexOf(index) })

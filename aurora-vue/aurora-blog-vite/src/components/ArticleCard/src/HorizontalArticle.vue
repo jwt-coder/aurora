@@ -97,10 +97,12 @@ export default defineComponent({
     const router = useRouter()
     const { t } = useI18n()
     const handleAuthorClick = (link: string) => {
-      if (link === '') link = window.location.href
+      if (!link) link = window.location.href
       window.open(link)
     }
     const toArticle = () => {
+      // 置顶文章尚未加载完成（骨架态）时不响应点击
+      if (!articleStore.topArticle || articleStore.topArticle === '') return
       let isAccess = false
       userStore.accessArticles.forEach((item: any) => {
         if (item == articleStore.topArticle.id) {

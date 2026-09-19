@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,9 +61,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     public PageResultDTO<RoleDTO> listRoles(ConditionVO conditionVO) {
         LambdaQueryWrapper<Role> queryWrapper = new LambdaQueryWrapper<Role>()
                 .like(StringUtils.isNotBlank(conditionVO.getKeywords()), Role::getRoleName, conditionVO.getKeywords());
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> roleMapper.selectCount(queryWrapper));
+        Integer count = roleMapper.selectCount(queryWrapper);
         List<RoleDTO> roleDTOs = roleMapper.listRoles(PageUtil.getLimitCurrent(), PageUtil.getSize(), conditionVO);
-        return new PageResultDTO<>(roleDTOs, asyncCount.get());
+        return new PageResultDTO<>(roleDTOs, count);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import java.util.List;
@@ -54,8 +55,26 @@ public class ArticleController {
 
     @ApiOperation("根据id获取文章")
     @GetMapping("/articles/{articleId}")
-    public ResultVO<ArticleDTO> getArticleById(@PathVariable("articleId") Integer articleId) {
-        return ResultVO.ok(articleService.getArticleById(articleId));
+    public ResultVO<ArticleDTO> getArticleById(@PathVariable("articleId") Integer articleId, HttpServletRequest request) {
+        return ResultVO.ok(articleService.getArticleById(articleId, request));
+    }
+
+    @ApiOperation("点赞/取消点赞文章")
+    @PostMapping("/articles/{articleId}/like")
+    public ResultVO<ArticleLikeDTO> likeArticle(@PathVariable("articleId") Integer articleId, HttpServletRequest request) {
+        return ResultVO.ok(articleService.likeArticle(articleId, request));
+    }
+
+    @ApiOperation("收藏/取消收藏文章")
+    @PostMapping("/articles/{articleId}/collect")
+    public ResultVO<Boolean> collectArticle(@PathVariable("articleId") Integer articleId) {
+        return ResultVO.ok(articleService.collectArticle(articleId));
+    }
+
+    @ApiOperation("我的收藏文章列表")
+    @GetMapping("/articles/collect")
+    public ResultVO<List<ArticleCardDTO>> listCollectedArticles() {
+        return ResultVO.ok(articleService.listCollectedArticles());
     }
 
     @ApiOperation("校验文章访问密码")

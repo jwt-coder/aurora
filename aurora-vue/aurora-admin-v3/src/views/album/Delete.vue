@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onActivated } from 'vue'
 import { NIcon, useMessage, useDialog } from 'naive-ui'
 import { RefreshOutline, TrashOutline } from '@vicons/ionicons5'
 import { getPlaceholder } from '@/utils/placeholder'
@@ -139,6 +139,36 @@ function handleRestore(photo) {
   })
 }
 
+// 分页拉取回收站全部照片id
+async function fetchAllRecyclePhotoIds() {
+  const ids = []
+  const pageSize = 100
+  let page = 1
+  let total = 0
+  while (true) {
+    const res = await getPhotosApi({
+      isDelete: 1,  // 获取回收站的照片
+      current: page,
+      size: pageSize
+    })
+    total = res.data.count || 0
+    const records = res.data.records || []
+    ids.push(...records.map(photo => photo.id))
+    if (records.length === 0 || ids.length >= total) break
+    page++
+  }
+  return ids
+}
+
+// 大批量id按每批500个分批提交，避免单次请求id过多
+function chunkIds(ids, size = 500) {
+  const chunks = []
+  for (let i = 0; i < ids.length; i += size) {
+    chunks.push(ids.slice(i, i + size))
+  }
+  return chunks
+}
+
 function handleRestoreAll() {
   if (photoList.value.length === 0) {
     message.warning('回收站为空')
@@ -147,23 +177,36 @@ function handleRestoreAll() {
 
   dialog.warning({
     title: '确认恢复',
-    content: `确定要恢复回收站中的所有照片吗？(${photoList.value.length}张)`,
+    content: `确定要恢复回收站中的所有照片吗？(${pagination.itemCount}张)`,
     positiveText: '确定',
     negativeText: '取消',
-    onPositiveClick: () => {
-      const photoIds = photoList.value.map(photo => photo.id)
-      updatePhotosDeleteApi({
-        ids: photoIds,
-        isDelete: 0
-      }).then(() => {
-        message.success(`已恢复${photoIds.length}张照片`)
-        // 当前页照片全部恢复，如果不是第一页，回退一页
-        if (pagination.page > 1) pagination.page--
+    onPositiveClick: async () => {
+      try {
+        // 先拉取回收站全部照片id，再批量恢复
+        const photoIds = await fetchAllRecyclePhotoIds()
+        if (photoIds.length === 0) {
+          message.warning('回收站为空')
+          return
+        }
+        let done = 0
+        for (const chunk of chunkIds(photoIds)) {
+          await updatePhotosDeleteApi({
+            ids: chunk,
+            isDelete: 0
+          })
+          done += chunk.length
+        }
+        message.success(`已恢复${done}张照片`)
+        // 全部恢复后回收站已清空，回到第一页
+        pagination.page = 1
         fetchPhotos()
-      }).catch(err => {
+      } catch (err) {
         console.error('恢复照片失败:', err)
-        message.error('恢复照片失败')
-      })
+        // 分批提交中途失败：部分已生效，提示实际情况并刷新列表
+        message.error('部分照片恢复失败，列表已刷新，请重试剩余部分')
+        pagination.page = 1
+        fetchPhotos()
+      }
     }
   })
 }
@@ -196,20 +239,31 @@ function handleClearAll() {
 
   dialog.warning({
     title: '确认清空',
-    content: `确定要清空回收站吗？此操作将永久删除 ${photoList.value.length} 张照片！`,
+    content: `确定要清空回收站吗？此操作将永久删除 ${pagination.itemCount} 张照片！`,
     positiveText: '确定',
     negativeText: '取消',
-    onPositiveClick: () => {
-      const photoIds = photoList.value.map(photo => photo.id)
-      deletePhotoApi(photoIds).then(() => {
+    onPositiveClick: async () => {
+      try {
+        // 先拉取回收站全部照片id，再分批彻底删除
+        const photoIds = await fetchAllRecyclePhotoIds()
+        if (photoIds.length === 0) {
+          message.warning('回收站为空')
+          return
+        }
+        for (const chunk of chunkIds(photoIds)) {
+          await deletePhotoApi(chunk)
+        }
         message.success('已清空回收站')
-        // 当前页照片全部删除，如果不是第一页，回退一页
-        if (pagination.page > 1) pagination.page--
+        // 回收站已清空，回到第一页
+        pagination.page = 1
         fetchPhotos()
-      }).catch(err => {
+      } catch (err) {
         console.error('清空回收站失败:', err)
-        message.error('清空回收站失败')
-      })
+        // 分批删除中途失败：部分已生效，提示实际情况并刷新列表
+        message.error('部分照片删除失败，列表已刷新，请重试剩余部分')
+        pagination.page = 1
+        fetchPhotos()
+      }
     }
   })
 }
@@ -219,7 +273,8 @@ function handlePageChange(page) {
   fetchPhotos()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchPhotos()
 })
 </script>

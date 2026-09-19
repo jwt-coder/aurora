@@ -33,6 +33,8 @@
         <result property="categoryName" column="category_name"/>
         <result property="type" column="type"/>
         <result property="originalUrl" column="original_url"/>
+        <result property="viewCount" column="visit_count"/>
+        <result property="likeCount" column="like_count"/>
         <association property="author" javaType="com.aurora.entity.UserInfo">
             <result property="nickname" column="author_nickname"/>
             <result property="website" column="author_website"/>
@@ -53,6 +55,7 @@
         <result property="type" column="type"/>
         <result property="createTime" column="create_time"/>
         <result property="categoryName" column="category_name"/>
+        <result property="viewsCount" column="views_count"/>
         <collection property="tagDTOs" ofType="com.aurora.model.dto.TagDTO">
             <id column="tag_id" property="id"/>
             <result column="tag_name" property="tagName"/>
@@ -185,6 +188,8 @@
                is_featured,
                type,
                original_url,
+               visit_count,
+               like_count,
                a.create_time   AS create_time,
                a.update_time   AS update_time,
                u.nickname      AS author_nickname,
@@ -205,6 +210,8 @@
                      status,
                      type,
                      original_url,
+                     visit_count,
+                     like_count,
                      create_time,
                      update_time
               FROM t_article
@@ -451,6 +458,7 @@
         a.status,
         a.type,
         a.create_time,
+        a.visit_count AS views_count,
         category_name,
         t.id AS tag_id,
         t.tag_name
@@ -466,6 +474,7 @@
         status,
         type,
         create_time,
+        visit_count,
         category_id
         FROM
         t_article
@@ -515,5 +524,45 @@
         FROM t_article
         GROUP BY date
         ORDER BY date DESC
+    </select>
+    <select id="listCollectedArticles" resultMap="ArticleCardDTOResultMap">
+        SELECT a.id                            AS id,
+               article_cover,
+               article_title,
+               if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract) AS article_content,
+               is_top,
+               is_featured,
+               status,
+               a.create_time                   AS create_time,
+               a.update_time                   AS update_time,
+               u.nickname                      AS author_nickname,
+               u.website                       AS author_website,
+               u.avatar                        AS author_avatar,
+               c.category_name                 AS category_name,
+               tag_name
+        FROM (SELECT a.id,
+                     a.user_id,
+                     a.category_id,
+                     a.article_cover,
+                     a.article_abstract,
+                     a.article_title,
+                     a.article_content,
+                     a.is_top,
+                     a.is_featured,
+                     a.status,
+                     a.create_time,
+                     a.update_time,
+                     uc.create_time AS collect_time
+              FROM t_article a
+                       JOIN t_user_collect uc ON a.id = uc.article_id
+              WHERE uc.user_id = #{userId}
+                and a.is_delete = 0
+                and a.status in (1, 2)) a
+                 LEFT JOIN t_article_tag at
+                           ON a.id = at.article_id
+                 LEFT JOIN t_tag t ON t.id = at.tag_id
+                 LEFT JOIN t_category c ON a.category_id = c.id
+                 LEFT JOIN t_user_info u ON a.user_id = u.id
+        ORDER BY a.collect_time DESC
     </select>
 </mapper>

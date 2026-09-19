@@ -1,6 +1,7 @@
 <template>
   <div class="block">
-    <Feature v-if="themeConfig.feature">
+    <!-- 置顶/推荐加载完成后若一篇都没有，隐藏整个推荐区，避免骨架永远转圈 -->
+    <Feature v-if="themeConfig.feature && !(topFeaturedLoaded && featuredArticles.length === 0)">
       <FeatureList />
     </Feature>
     <span v-if="themeConfig.feature">
@@ -28,7 +29,7 @@
               </b>
             </li>
           </template>
-          <template v-else-if="(categories.length = 0)">
+          <template v-else-if="categories.length === 0">
             <li v-for="i in 6" :key="i" style="position: relative; top: -4px">
               <ob-skeleton tag="span" width="60px" height="33px" />
             </li>
@@ -41,6 +42,14 @@
           <template v-if="haveArticles === true">
             <li v-for="article in articles" :key="article.id">
               <ArticleCard class="home-article" :data="article" />
+            </li>
+            <li v-if="articles.length === 0" class="col-span-full text-center text-ob-dim py-16">
+              {{ t('settings.no-articles') }}
+            </li>
+          </template>
+          <template v-else-if="articleLoadFailed">
+            <li class="col-span-full text-center text-ob-dim py-16">
+              加载失败，请刷新重试
             </li>
           </template>
           <template v-else>
@@ -119,7 +128,8 @@ export default defineComponent({
     const activeTab = ref(0)
     const articleOffset = ref(0)
     const reactiveData = reactive({
-      haveArticles: false
+      haveArticles: false,
+      articleLoadFailed: false
     })
     const pagination = reactive({
       size: 15,
@@ -136,18 +146,28 @@ export default defineComponent({
     })
     const fetchTopAndFeatured = () => {
       api.getTopAndFeaturedArticles().then(({ data }) => {
-        data.data.topArticle.articleContent = markdownToHtml(data.data.topArticle.articleContent)
-          .replace(/<\/?[^>]*>/g, '')
-          .replace(/[|]*\n/, '')
-          .replace(/&npsp;/gi, '')
-        data.data.featuredArticles.forEach((item: any) => {
-          item.articleContent = markdownToHtml(item.articleContent)
-            .replace(/<\/?[^>]*>/g, '')
-            .replace(/[|]*\n/, '')
-            .replace(/&npsp;/gi, '')
-        })
-        articleStore.topArticle = data.data.topArticle
-        articleStore.featuredArticles = data.data.featuredArticles
+        try {
+          if (data.flag && data.data) {
+            // 没有任何置顶/推荐文章时后端返回 null 字段，逐个判空，不能裸取
+            if (data.data.topArticle) {
+              data.data.topArticle.articleContent = markdownToHtml(data.data.topArticle.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+            }
+            ;(data.data.featuredArticles || []).forEach((item: any) => {
+              item.articleContent = markdownToHtml(item.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+            })
+            articleStore.topArticle = data.data.topArticle || ''
+            articleStore.featuredArticles = data.data.featuredArticles || []
+          }
+        } finally {
+          // 无论成功失败都结束骨架状态，避免"没有数据"时骨架永远转圈
+          articleStore.topFeaturedLoaded = true
+        }
       })
     }
     const fetchArticles = () => {
@@ -156,13 +176,14 @@ export default defineComponent({
       pagination.current = userStore.page
       if (userStore.tab === 0) {
         reactiveData.haveArticles = false
+        reactiveData.articleLoadFailed = false
         api
           .getArticles({
             current: pagination.current,
             size: pagination.size
           })
           .then(({ data }) => {
-            if (data.flag) {
+            if (data.flag && data.data) {
               data.data.records.forEach((item: any) => {
                 item.articleContent = markdownToHtml(item.articleContent)
                   .replace(/<\/?[^>]*>/g, '')
@@ -172,7 +193,12 @@ export default defineComponent({
               articleStore.articles = data.data.records
               pagination.total = data.data.count
               reactiveData.haveArticles = true
+            } else {
+              reactiveData.articleLoadFailed = true
             }
+          })
+          .catch(() => {
+            reactiveData.articleLoadFailed = true
           })
       } else {
         fetchArticlesByCategoryId(userStore.tab)
@@ -180,6 +206,7 @@ export default defineComponent({
     }
     const fetchArticlesByCategoryId = (categoryId: any) => {
       reactiveData.haveArticles = false
+      reactiveData.articleLoadFailed = false
       api
         .getArticlesByCategoryId({
           current: pagination.current,
@@ -187,21 +214,28 @@ export default defineComponent({
           categoryId: categoryId
         })
         .then(({ data }) => {
-          data.data.records.forEach((item: any) => {
-            item.articleContent = markdownToHtml(item.articleContent)
-              .replace(/<\/?[^>]*>/g, '')
-              .replace(/[|]*\n/, '')
-              .replace(/&npsp;/gi, '')
-          })
-          articleStore.articles = data.data.records
-          pagination.total = data.data.count
-          reactiveData.haveArticles = true
+          if (data.flag && data.data) {
+            data.data.records.forEach((item: any) => {
+              item.articleContent = markdownToHtml(item.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+            })
+            articleStore.articles = data.data.records
+            pagination.total = data.data.count
+            reactiveData.haveArticles = true
+          } else {
+            reactiveData.articleLoadFailed = true
+          }
+        })
+        .catch(() => {
+          reactiveData.articleLoadFailed = true
         })
     }
     const fetchCategories = () => {
       categoryStore.categories = []
       api.getAllCategories().then(({ data }) => {
-        categoryStore.categories.push(...data.data)
+        categoryStore.categories.push(...(data.data || []))
       })
     }
     const expandHandler = () => {

@@ -9,6 +9,14 @@
           <li v-for="article in articles" :key="article.id">
             <ArticleCard class="tag-article" :data="article" />
           </li>
+          <li v-if="articles.length === 0" class="col-span-full text-center text-ob-dim py-16">
+            {{ t('settings.no-articles') }}
+          </li>
+        </template>
+        <template v-else-if="loadFailed">
+          <li class="col-span-full text-center text-ob-dim py-16">
+            加载失败，请刷新重试
+          </li>
         </template>
         <template v-else>
           <li v-for="n in 12" :key="n">
@@ -26,6 +34,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, onMounted, reactive, toRefs } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import { ArticleCard } from '@/components/ArticleCard'
 import Paginator from '@/components/Paginator.vue'
@@ -38,6 +47,7 @@ export default defineComponent({
   components: { Breadcrumb, ArticleCard, Paginator },
   setup() {
     const route = useRoute()
+    const { t } = useI18n()
     const pagination = reactive({
       size: 12,
       total: 0,
@@ -46,7 +56,8 @@ export default defineComponent({
     const reactiveData = reactive({
       articles: [] as any,
       tagName: '' as any,
-      haveArticles: false
+      haveArticles: false,
+      loadFailed: false
     })
     onMounted(() => {
       reactiveData.tagName = route.query.tagName
@@ -54,6 +65,7 @@ export default defineComponent({
     })
     const fetchArticles = () => {
       reactiveData.haveArticles = false
+      reactiveData.loadFailed = false
       api
         .getArticlesByTagId({
           tagId: route.params.tagId,
@@ -61,15 +73,22 @@ export default defineComponent({
           size: pagination.size
         })
         .then(({ data }) => {
-          data.data.records.forEach((item: any) => {
-            item.articleContent = markdownToHtml(item.articleContent)
-              .replace(/<\/?[^>]*>/g, '')
-              .replace(/[|]*\n/, '')
-              .replace(/&npsp;/gi, '')
-          })
-          reactiveData.articles = data.data.records
-          pagination.total = data.data.count
-          reactiveData.haveArticles = true
+          if (data.flag && data.data) {
+            data.data.records.forEach((item: any) => {
+              item.articleContent = markdownToHtml(item.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+            })
+            reactiveData.articles = data.data.records
+            pagination.total = data.data.count
+            reactiveData.haveArticles = true
+          } else {
+            reactiveData.loadFailed = true
+          }
+        })
+        .catch(() => {
+          reactiveData.loadFailed = true
         })
     }
     const backToPageTop = () => {
@@ -84,6 +103,7 @@ export default defineComponent({
       fetchArticles()
     }
     return {
+      t,
       pagination,
       pageChangeHanlder,
       ...toRefs(reactiveData)

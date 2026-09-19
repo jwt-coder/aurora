@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NSpace, NTag, NPopconfirm, NAvatar, NImage, NDropdown, NPagination, useMessage, useDialog } from 'naive-ui'
 import { AddOutline, RefreshOutline, ArrowUpOutline, LockClosedOutline, CreateOutline, TrashOutline, EllipsisVerticalOutline } from '@vicons/ionicons5'
@@ -162,23 +162,30 @@ function parseImages(str) {
   }
 }
 
+// 获取说说列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchTalks() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getTalksApi({
     current: pagination.page,
     size: pagination.pageSize,
     status: searchForm.status
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     talkList.value = (res.data.records || []).map(row => ({
       ...row,
       images: parseImages(row.images)
     }))
     pagination.itemCount = res.data.count || 0
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取说说列表失败:', err)
     message.error('获取说说列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -236,7 +243,8 @@ function handlePageSizeChange(pageSize) {
   fetchTalks()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchTalks()
 })
 </script>

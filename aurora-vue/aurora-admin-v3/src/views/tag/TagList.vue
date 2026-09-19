@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onActivated } from 'vue'
 import { NButton, NSpace, NTag, NPopconfirm, NPagination, useMessage } from 'naive-ui'
 import { AddOutline, RefreshOutline } from '@vicons/ionicons5'
 import { getTagsApi, saveTagApi, deleteTagApi } from '@/api/tag'
@@ -138,16 +138,21 @@ const columns = [
   }
 ]
 
+// 获取标签列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchTags() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getTagsApi({
     current: pagination.page,
     size: pagination.pageSize
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     tagList.value = res.data.records || []
     pagination.itemCount = res.data.count || res.data.total || 0
     loading.value = false
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取标签列表失败:', err)
     message.error('获取标签列表失败')
     loading.value = false
@@ -208,7 +213,8 @@ function handlePageSizeChange(pageSize) {
   fetchTags()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchTags()
 })
 </script>

@@ -40,6 +40,8 @@
     "words": "Words",
     "visitor_count": "Total Visitors",
     "visit_count": "Total Visits",
+    "about-empty": "Nothing here yet",
+    "no-articles": "No articles yet",
     "button-all": "All",
     "paginator": {
       "newer": "Newer",

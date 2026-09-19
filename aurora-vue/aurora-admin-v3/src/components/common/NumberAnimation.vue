@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   from: {
@@ -45,5 +45,13 @@ watch(() => props.to, () => {
   }
   startTime = null
   animationFrame = requestAnimationFrame(animate)
+})
+
+// 组件卸载时取消未完成的动画帧，避免内存泄漏
+onUnmounted(() => {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame)
+    animationFrame = null
+  }
 })
 </script>

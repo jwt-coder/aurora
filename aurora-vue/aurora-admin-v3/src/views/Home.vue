@@ -191,6 +191,8 @@ const userAreaType = ref(1)
 const categoryCount = ref(0)
 const topArticles = ref([]) // 热门文章列表
 let userAreaChart = null // 用户地域图表实例
+let visitWeekChart = null // 一周访问量图表实例
+let articleCategoryChart = null // 文章分类图表实例
 
 // 获取首页数据
 const fetchHomeData = async () => {
@@ -250,6 +252,11 @@ const initVisitWeek = (data) => {
   const container = document.getElementById('visits_per_week')
   if (!container) return
 
+  // 销毁旧实例
+  if (visitWeekChart) {
+    visitWeekChart.destroy()
+  }
+
   const line = new Line(container, {
     data,
     xField: 'day',
@@ -301,6 +308,7 @@ const initVisitWeek = (data) => {
       }
     }
   })
+  visitWeekChart = line
   line.render()
 }
 
@@ -317,6 +325,11 @@ const initArticleVisits = (data) => {
 const initArticleCategory = (data) => {
   const container = document.getElementById('article_category')
   if (!container) return
+
+  // 销毁旧实例
+  if (articleCategoryChart) {
+    articleCategoryChart.destroy()
+  }
 
   const pie = new Pie(container, {
     data,
@@ -361,6 +374,7 @@ const initArticleCategory = (data) => {
       }
     }
   })
+  articleCategoryChart = pie
   pie.render()
 }
 
@@ -485,8 +499,17 @@ onMounted(() => {
 // 组件卸载时清理
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
+  if (visitWeekChart) {
+    visitWeekChart.destroy()
+    visitWeekChart = null
+  }
+  if (articleCategoryChart) {
+    articleCategoryChart.destroy()
+    articleCategoryChart = null
+  }
   if (userAreaChart) {
     userAreaChart.destroy()
+    userAreaChart = null
   }
 })
 

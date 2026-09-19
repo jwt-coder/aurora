@@ -68,10 +68,11 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- fastjson 旧版本（<1.2.83）存在反序列化自动类型绕过漏洞，建议后续持续关注并升级到更新的 1.2.83+ 补丁版本 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.76</version>
+            <version>1.2.83</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

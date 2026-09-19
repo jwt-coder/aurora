@@ -222,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount, onDeactivated } from 'vue'
+import { ref, reactive, computed, onActivated, onBeforeUnmount, onDeactivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NIcon, useMessage, useDialog } from 'naive-ui'
 import { CloudUploadOutline, CloseOutline, DocumentTextOutline, SaveOutline, SendOutline } from '@vicons/ionicons5'
@@ -296,6 +296,8 @@ function resetArticle() {
   article.status = 1
   article.originalUrl = ''
   article.password = ''
+  // 表单已清空，重置加载标记：下次激活（如再次编辑同一文章）必须重新拉取
+  loadedArticleId = null
 }
 
 const typeOptions = [
@@ -432,7 +434,7 @@ async function handleUploadImg(files, callback) {
 
   try {
     const urls = await Promise.all(uploadPromises)
-    callback(urls.map(url => url || ''))
+    callback(urls.filter(url => url))
   } catch (error) {
     console.error('上传图片失败:', error)
   }
@@ -652,8 +654,16 @@ function autoSaveArticle() {
   }
 }
 
-onMounted(() => {
-  fetchArticle()
+// keep-alive 缓存下在激活时按路由 id 初始化（onActivated 首次挂载时也会触发）；
+// 仅在首次激活或路由对应的文章 id 变化时重新拉取，避免切回标签页时覆盖未保存的编辑内容。
+// loadedArticleId 用 null 表示"从未加载过"（新建文章路由无 id，不能与 undefined 混用，否则首次激活会被跳过）
+let loadedArticleId = null
+onActivated(() => {
+  const articleId = route.params.id || null
+  if (loadedArticleId === null || articleId !== loadedArticleId) {
+    loadedArticleId = articleId
+    fetchArticle()
+  }
 })
 
 onBeforeUnmount(() => {

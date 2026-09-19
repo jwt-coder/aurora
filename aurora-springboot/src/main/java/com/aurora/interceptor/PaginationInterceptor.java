@@ -22,7 +22,17 @@ public class PaginationInterceptor implements HandlerInterceptor {
         String currentPage = request.getParameter(CURRENT);
         String pageSize = Optional.ofNullable(request.getParameter(SIZE)).orElse(DEFAULT_SIZE);
         if (!Objects.isNull(currentPage) && !StringUtils.isEmpty(currentPage)) {
-            PageUtil.setCurrentPage(new Page<>(Long.parseLong(currentPage), Long.parseLong(pageSize)));
+            long current;
+            long size;
+            try {
+                // 先校验页码参数是否为数字，非数字时按默认第 1 页处理
+                current = Long.parseLong(currentPage);
+                size = Long.parseLong(pageSize);
+            } catch (NumberFormatException e) {
+                current = 1L;
+                size = Long.parseLong(DEFAULT_SIZE);
+            }
+            PageUtil.setCurrentPage(new Page<>(current, size));
         }
         return true;
     }

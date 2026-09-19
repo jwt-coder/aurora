@@ -213,12 +213,7 @@ export default defineComponent({
 .img-error {
   display: none !important;
 }
-.el-drawer {
-  background-color: var(--background-primary) !important;
-}
-.el-dialog {
-  background-color: var(--background-primary) !important;
-}
+/* Element Plus 弹窗/抽屉主题统一在 src/styles/element-plus.scss 维护 */
 body {
   background: var(--background-primary-alt);
 }

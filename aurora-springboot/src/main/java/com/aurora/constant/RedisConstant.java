@@ -24,6 +24,16 @@ public interface RedisConstant {
 
     String ARTICLE_ACCESS = "article_access:";
 
+    /**
+     * 文章点赞去重：value 为用户id或 ip:xxx，member 为文章id（仅做去重，计数以 t_article.like_count 为准）
+     */
+    String ARTICLE_LIKE_USER = "article_like_user:";
+
     String SYSTEM_CONFIG = "system_config";
+
+    /**
+     * 配置类缓存（网站配置/关于我/系统配置）的过期时间：24 小时
+     */
+    long CONFIG_CACHE_EXPIRE_TIME = 24 * 60 * 60;
 
 }

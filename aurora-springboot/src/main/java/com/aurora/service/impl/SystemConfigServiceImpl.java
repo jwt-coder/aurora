@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.aurora.constant.RedisConstant.CONFIG_CACHE_EXPIRE_TIME;
 import static com.aurora.constant.RedisConstant.SYSTEM_CONFIG;
 
 @Service
@@ -108,7 +111,17 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
             }
         }
 
-        redisService.del(SYSTEM_CONFIG);
+        // 事务提交后再删除缓存，避免事务回滚后缓存被误删或读到旧数据
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    redisService.del(SYSTEM_CONFIG);
+                }
+            });
+        } else {
+            redisService.del(SYSTEM_CONFIG);
+        }
     }
 
     private void putIfNotNull(Map<String, String> map, String key, String value) {
@@ -127,7 +140,8 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
             for (SystemConfig config : configList) {
                 configMap.put(config.getConfigKey(), config.getConfigValue());
             }
-            redisService.set(SYSTEM_CONFIG, configMap);
+            // 写入缓存并设置 24 小时过期，避免长期占用内存且能兜底自动刷新
+            redisService.set(SYSTEM_CONFIG, configMap, CONFIG_CACHE_EXPIRE_TIME);
         }
         
         return configMap;

@@ -19,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -83,6 +85,18 @@ public class ResourceServiceImpl extends ServiceImpl<ResourceMapper, Resource> i
             resources.add(resource);
         }));
         this.saveBatch(resources);
+        // 清空并重建了 t_resource/t_role_resource，事务提交后再刷新权限元数据缓存（置空后下次访问自动重新加载），
+        // 避免并发请求在事务提交前把旧数据重新加载进缓存
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    filterInvocationSecurityMetadataSource.clearDataSource();
+                }
+            });
+        } else {
+            filterInvocationSecurityMetadataSource.clearDataSource();
+        }
     }
 
     @Override

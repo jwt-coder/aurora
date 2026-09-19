@@ -157,9 +157,11 @@ function handleSearch() {
 function handleOffline(user) {
   offlineUserApi(user.userInfoId).then(() => {
     message.success('已下线用户：' + user.nickname)
-    // 如果下线的是自己，跳转到登录页
-    if (user.userInfoId === userStore.userInfo?.id) {
-      sessionStorage.removeItem('token')
+    // 如果下线的是自己，清空登录态（token + pinia 用户信息）后跳转到登录页
+    if (user.userInfoId === userStore.userInfo?.userInfoId) {
+      userStore.logout()
+      // 清掉 pinia 持久化到 sessionStorage 的用户信息，避免登录态残留
+      sessionStorage.removeItem('user')
       router.push('/login')
     } else {
       fetchOnlineUsers()

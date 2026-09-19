@@ -40,6 +40,8 @@
     "words": "文字",
     "visitor_count": "总共访客数",
     "visit_count": "总共访问数",
+    "about-empty": "博主还没有填写内容",
+    "no-articles": "暂无文章",
     "button-all": "全部",
     "paginator": {
       "newer": "新的",

@@ -3,7 +3,7 @@
     <Breadcrumb :current="t('menu.about')" />
     <div class="flex flex-col">
       <div class="post-header">
-        <h1 v-if="about" class="post-title text-white uppercase">
+        <h1 v-if="about || aboutLoadFailed" class="post-title text-white uppercase">
           {{ t('titles.about') }}
         </h1>
         <ob-skeleton
@@ -15,7 +15,10 @@
       <div class="main-grid">
         <div class="relative">
           <div v-if="about" class="post-html" ref="postRef" v-html="about" />
-          <div v-else class="bg-ob-deep-800 px-14 py-16 rounded-2xl shadow-xl block min-h-screen">
+          <div v-else-if="aboutLoadFailed" class="bg-ob-deep-800 px-14 py-16 rounded-2xl shadow-xl text-center text-ob-dim">
+          {{ t('settings.about-empty') }}
+        </div>
+        <div v-else class="bg-ob-deep-800 px-14 py-16 rounded-2xl shadow-xl block min-h-screen">
             <ob-skeleton tag="div" :count="1" height="36px" width="150px" class="mb-6" />
             <br />
             <ob-skeleton tag="div" :count="35" height="16px" width="100px" class="mr-2" />
@@ -77,7 +80,8 @@ export default defineComponent({
       comments: [] as any,
       haveMore: false as any,
       isReload: false as any,
-      images: [] as any
+      images: [] as any,
+      aboutLoadFailed: false as any
     })
     const pageInfo = reactive({
       current: 1,
@@ -91,6 +95,9 @@ export default defineComponent({
     onUnmounted(() => {
       commonStore.resetHeaderImage()
       tocbot.destroy()
+      emitter.off('aboutFetchComment', handleFetchComment)
+      emitter.off('aboutFetchReplies', handleFetchReplies)
+      emitter.off('aboutLoadMore', handleLoadMore)
     })
     provide(
       'comments',
@@ -100,17 +107,20 @@ export default defineComponent({
       'haveMore',
       computed(() => reactiveData.haveMore)
     )
-    emitter.on('aboutFetchComment', () => {
+    const handleFetchComment = () => {
       pageInfo.current = 1
       reactiveData.isReload = true
       fetchComments()
-    })
-    emitter.on('aboutFetchReplies', (index) => {
+    }
+    const handleFetchReplies = (index: any) => {
       fetchReplies(index)
-    })
-    emitter.on('aboutLoadMore', () => {
+    }
+    const handleLoadMore = () => {
       fetchComments()
-    })
+    }
+    emitter.on('aboutFetchComment', handleFetchComment)
+    emitter.on('aboutFetchReplies', handleFetchReplies)
+    emitter.on('aboutLoadMore', handleLoadMore)
     const handlePreview = (index: any) => {
       v3ImgPreviewFn({ images: reactiveData.images, index: reactiveData.images.indexOf(index) })
     }
@@ -145,12 +155,21 @@ export default defineComponent({
     }
     const fetchAbout = () => {
       api.getAbout().then(({ data }) => {
-        data.data.content = markdownToHtml(data.data.content)
-        reactiveData.about = data.data.content
-        nextTick(() => {
-          Prism.highlightAll()
-          initTocbot()
-        })
+        try {
+          if (data.flag && data.data) {
+            data.data.content = markdownToHtml(data.data.content)
+            reactiveData.about = data.data.content
+            nextTick(() => {
+              Prism.highlightAll()
+              initTocbot()
+            })
+          } else {
+            // 后台未配置"关于我"等内容时结束骨架，显示空状态提示
+            reactiveData.aboutLoadFailed = true
+          }
+        } catch (error) {
+          reactiveData.aboutLoadFailed = true
+        }
       })
     }
     const fetchComments = () => {

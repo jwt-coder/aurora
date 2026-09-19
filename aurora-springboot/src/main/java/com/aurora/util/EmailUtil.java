@@ -1,6 +1,7 @@
 package com.aurora.util;
 
 import com.aurora.model.dto.EmailDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,6 +14,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 @Component
+@Slf4j
 public class EmailUtil {
 
     @Value("${spring.mail.username}")
@@ -37,7 +39,7 @@ public class EmailUtil {
             mimeMessageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("发送邮件失败, 收件人: {}, 主题: {}", emailDTO.getEmail(), emailDTO.getSubject(), e);
         }
     }
 

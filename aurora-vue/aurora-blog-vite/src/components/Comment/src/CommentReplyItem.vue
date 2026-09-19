@@ -3,7 +3,15 @@
     <div class="flex space-x-3 xl:space-x-5">
       <Avatar :url="reply.avatar" />
       <div class="reply bg-white flex flex-col p-3 rounded-md relative shadow-md">
-        <p class="commentContent" v-html="commentContent.replaceAll('\n', '<br>')" />
+        <p class="commentContent">
+          <a
+            v-if="showReplyLink && reply.replyWebsite"
+            :href="reply.replyWebsite"
+            target="_blank"
+            class="reply-link">@{{ reply.replyNickname }}&nbsp;</a>
+          <span v-else-if="showReplyLink">@{{ reply.replyNickname }}&nbsp;</span>
+          <span v-html="(commentContent || '').replaceAll('\n', '<br>')" />
+        </p>
         <div class="flex justify-between mt-2 text-xs text-gray-400 space-x-3 md:space-x-16">
           <span> {{ reply.nickname }} | {{ time }}</span>
           <div>
@@ -53,19 +61,12 @@ export default defineComponent({
     const changeShow = () => {
       reactiveData.show = false
     }
-    const commentContent = computed(() => {
-      if (props.reply.replyUserId !== props.commentUserId) {
-        return (
-          `<a href="${props.reply.replyWebsite}" target="_blank" class="reply-link">@${props.reply.replyNickname}&nbsp</a>` +
-          props.reply.commentContent
-        )
-      } else {
-        return props.reply.commentContent
-      }
-    })
+    const showReplyLink = computed(() => props.reply.replyUserId !== props.commentUserId)
+    const commentContent = computed(() => props.reply.commentContent)
     return {
       ...toRefs(reactiveData),
       commentContent,
+      showReplyLink,
       clickOnSonReply,
       changeShow
     }

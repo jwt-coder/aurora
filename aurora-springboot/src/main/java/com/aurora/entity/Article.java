@@ -44,6 +44,16 @@ public class Article {
 
     private String originalUrl;
 
+    /**
+     * 访问量（数据库为唯一事实源，避免仅存 Redis 重启丢失）
+     */
+    private Integer visitCount;
+
+    /**
+     * 点赞数
+     */
+    private Integer likeCount;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

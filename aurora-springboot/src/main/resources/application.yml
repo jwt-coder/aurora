@@ -3,3 +3,6 @@ spring:
     name: aurora-springboot
   profiles:
     active: prod
+
+# IP 说明：IpUtil 仅在 request.getRemoteAddr() 为回环/内网地址（即请求来自反向代理）时
+# 才信任 X-Real-IP / X-Forwarded-For 等请求头，公网直连一律取 getRemoteAddr()，无需额外配置

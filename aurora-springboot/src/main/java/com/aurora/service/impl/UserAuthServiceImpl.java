@@ -12,6 +12,7 @@ import com.aurora.exception.BizException;
 import com.aurora.mapper.UserAuthMapper;
 import com.aurora.mapper.UserInfoMapper;
 import com.aurora.mapper.UserRoleMapper;
+import com.aurora.mapper.VisitorAreaMapper;
 import com.aurora.service.*;
 import com.aurora.strategy.context.SocialLoginStrategyContext;
 import com.aurora.util.PageUtil;
@@ -55,6 +56,9 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     @Autowired
     private UserRoleMapper userRoleMapper;
+
+    @Autowired
+    private VisitorAreaMapper visitorAreaMapper;
 
     @Autowired
     private RedisService redisService;
@@ -151,15 +155,13 @@ public class UserAuthServiceImpl implements UserAuthService {
                 }
                 return userAreaDTOs;
             case VISITOR:
-                Map<String, Object> visitorArea = redisService.hGetAll(VISITOR_AREA);
-                if (Objects.nonNull(visitorArea)) {
-                    userAreaDTOs = visitorArea.entrySet().stream()
-                            .map(item -> UserAreaDTO.builder()
-                                    .name(item.getKey())
-                                    .value(Long.valueOf(item.getValue().toString()))
-                                    .build())
-                            .collect(Collectors.toList());
-                }
+                // 访客地区分布实时落库在 t_visitor_area，直接读库（历史数据不再依赖 Redis，清空不丢）
+                userAreaDTOs = visitorAreaMapper.selectList(null).stream()
+                        .map(item -> UserAreaDTO.builder()
+                                .name(item.getName())
+                                .value(Long.valueOf(item.getValue().toString()))
+                                .build())
+                        .collect(Collectors.toList());
                 return userAreaDTOs;
             default:
                 break;
@@ -208,9 +210,12 @@ public class UserAuthServiceImpl implements UserAuthService {
 
     @Override
     public void updatePassword(UserVO userVO) {
-        if (!checkUser(userVO)) {
+        // 先校验邮箱是否注册，再校验邮箱验证码与图形验证码（防止仅凭邮箱即可越权重置任意账号密码；
+        // 顺序不能反，否则填错邮箱时验证码会被白白烧掉）
+        if (!isUsernameRegistered(userVO.getUsername())) {
             throw new BizException("邮箱尚未注册！");
         }
+        validateVerifyCode(userVO);
         userAuthMapper.update(new UserAuth(), new LambdaUpdateWrapper<UserAuth>()
                 .set(UserAuth::getPassword, BCrypt.hashpw(userVO.getPassword(), BCrypt.gensalt()))
                 .eq(UserAuth::getUsername, userVO.getUsername()));
@@ -256,37 +261,49 @@ public class UserAuthServiceImpl implements UserAuthService {
     }
 
     private Boolean checkUser(UserVO user) {
-        // 验证邮箱验证码
-        if (!user.getCode().equals(redisService.get(USER_CODE_KEY + user.getUsername()))) {
+        // 校验邮箱验证码与图形验证码（用后删除，防止重复使用）
+        validateVerifyCode(user);
+        return isUsernameRegistered(user.getUsername());
+    }
+
+    private Boolean isUsernameRegistered(String username) {
+        UserAuth userAuth = userAuthMapper.selectOne(new LambdaQueryWrapper<UserAuth>()
+                .select(UserAuth::getUsername)
+                .eq(UserAuth::getUsername, username));
+        return Objects.nonNull(userAuth);
+    }
+
+    /**
+     * 校验邮箱验证码与图形验证码，全部通过后删除验证码，防止重复使用
+     */
+    private void validateVerifyCode(UserVO user) {
+        // 验证邮箱验证码（空值直接判定失败，避免 NPE）
+        if (Objects.isNull(user.getCode())
+                || !user.getCode().equals(redisService.get(USER_CODE_KEY + user.getUsername()))) {
             throw new BizException("邮箱验证码错误！");
         }
-        
+
         // 验证图形验证码
         String captchaKey = "captcha:" + user.getCaptchaUuid();
         String storedCaptcha = (String) redisService.get(captchaKey);
         if (storedCaptcha == null) {
             throw new BizException("图形验证码已过期！");
         }
-        if (!user.getCaptcha().toLowerCase().equals(storedCaptcha)) {
+        if (Objects.isNull(user.getCaptcha()) || !user.getCaptcha().toLowerCase().equals(storedCaptcha)) {
             throw new BizException("图形验证码错误！");
         }
-        
+
         // 检查验证码是否已被使用过发送邮件
         String usedFlag = (String) redisService.get(captchaKey + ":used");
         if (usedFlag == null) {
             throw new BizException("请先发送邮箱验证码！");
         }
-        
+
         // 验证成功后删除验证码和使用标记
         redisService.del(captchaKey);
         redisService.del(captchaKey + ":used");
         // 邮箱验证码验证通过后删除，防止重复使用
         redisService.del(USER_CODE_KEY + user.getUsername());
-        
-        UserAuth userAuth = userAuthMapper.selectOne(new LambdaQueryWrapper<UserAuth>()
-                .select(UserAuth::getUsername)
-                .eq(UserAuth::getUsername, user.getUsername()));
-        return Objects.nonNull(userAuth);
     }
 
 }

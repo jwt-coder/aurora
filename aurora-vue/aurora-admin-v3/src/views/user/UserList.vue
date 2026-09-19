@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onActivated } from 'vue'
 import { NButton, NSpace, NTag, NAvatar, NSwitch, NCheckbox, NCheckboxGroup, NPagination, useMessage } from 'naive-ui'
 import { getUsersApi, updateUserDisableApi, updateUserRoleApi, getUserRolesApi } from '@/api/user'
 import dayjs from 'dayjs'
@@ -208,7 +208,10 @@ const columns = [
   }
 ]
 
+// 获取用户列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchUsers() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getUsersApi({
     current: pagination.page,
@@ -216,13 +219,17 @@ function fetchUsers() {
     keywords: searchForm.keywords,
     loginType: searchForm.loginType
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     userList.value = res.data.records || []
     pagination.itemCount = res.data.count || 0
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取用户列表失败:', err)
     message.error('获取用户列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -288,8 +295,9 @@ function handlePageSizeChange(pageSize) {
   fetchUsers()
 }
 
-onMounted(() => {
-  fetchUsers()
+// keep-alive 缓存下每次激活都刷新列表数据（onActivated 首次挂载时也会触发）
+onActivated(() => {
   fetchUserRoles()
+  fetchUsers()
 })
 </script>

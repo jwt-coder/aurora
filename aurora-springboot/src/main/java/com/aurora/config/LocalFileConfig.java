@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.IOException;
 import java.net.URLConnection;
 
 @Controller
@@ -30,6 +31,18 @@ public class LocalFileConfig {
         File file = new File(storagePath, filePath);
 
         if (!file.exists() || !file.isFile()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 路径穿越校验：文件的真实路径必须位于存储目录内（带分隔符边界，防止 /data/upload 与 /data/upload2 这类同级前缀目录绕过）
+        try {
+            String storageCanonicalPath = new File(storagePath).getCanonicalPath();
+            String fileCanonicalPath = file.getCanonicalPath();
+            if (!fileCanonicalPath.equals(storageCanonicalPath)
+                    && !fileCanonicalPath.startsWith(storageCanonicalPath + File.separator)) {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }
 

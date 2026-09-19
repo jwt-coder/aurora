@@ -27,6 +27,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -44,6 +45,7 @@ import static com.aurora.constant.CommonConstant.*;
 import static com.aurora.constant.RabbitMQConstant.EMAIL_EXCHANGE;
 import static com.aurora.enums.CommentTypeEnum.*;
 
+@Slf4j
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
 
@@ -96,7 +98,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         commentMapper.insert(comment);
         String fromNickname = UserUtil.getUserDetailsDTO().getNickname();
         if (websiteConfig.getIsEmailNotice().equals(TRUE)) {
-            CompletableFuture.runAsync(() -> notice(comment, fromNickname));
+            CompletableFuture.runAsync(() -> {
+                try {
+                    notice(comment, fromNickname);
+                } catch (Exception e) {
+                    // 通知失败不影响评论保存，仅记录日志
+                    log.error("发送评论通知失败, commentId: {}", comment.getId(), e);
+                }
+            });
         }
     }
 
@@ -137,9 +146,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @SneakyThrows
     @Override
     public PageResultDTO<CommentAdminDTO> listCommentsAdmin(ConditionVO conditionVO) {
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> commentMapper.countComments(conditionVO));
+        Integer count = commentMapper.countComments(conditionVO);
         List<CommentAdminDTO> commentBackDTOList = commentMapper.listCommentsAdmin(PageUtil.getLimitCurrent(), PageUtil.getSize(), conditionVO);
-        return new PageResultDTO<>(commentBackDTOList, asyncCount.get());
+        return new PageResultDTO<>(commentBackDTOList, count);
     }
 
     @Override

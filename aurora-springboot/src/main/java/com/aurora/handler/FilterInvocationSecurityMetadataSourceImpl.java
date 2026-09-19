@@ -22,27 +22,35 @@ public class FilterInvocationSecurityMetadataSourceImpl implements FilterInvocat
     @Autowired
     private RoleMapper roleMapper;
 
-    private static List<ResourceRoleDTO> resourceRoleList;
+    private static volatile List<ResourceRoleDTO> resourceRoleList;
 
     @PostConstruct
     private void loadResourceRoleList() {
         resourceRoleList = roleMapper.listResourceRoles();
     }
 
-    public void clearDataSource() {
+    public synchronized void clearDataSource() {
         resourceRoleList = null;
     }
 
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-        if (CollectionUtils.isEmpty(resourceRoleList)) {
-            this.loadResourceRoleList();
+        // 双重检查 + synchronized，保证并发时只加载一次，volatile 保证可见性
+        List<ResourceRoleDTO> list = resourceRoleList;
+        if (CollectionUtils.isEmpty(list)) {
+            synchronized (FilterInvocationSecurityMetadataSourceImpl.class) {
+                list = resourceRoleList;
+                if (CollectionUtils.isEmpty(list)) {
+                    list = roleMapper.listResourceRoles();
+                    resourceRoleList = list;
+                }
+            }
         }
         FilterInvocation fi = (FilterInvocation) object;
         String method = fi.getRequest().getMethod();
         String url = fi.getRequest().getRequestURI();
         AntPathMatcher antPathMatcher = new AntPathMatcher();
-        for (ResourceRoleDTO resourceRoleDTO : resourceRoleList) {
+        for (ResourceRoleDTO resourceRoleDTO : list) {
             if (antPathMatcher.match(resourceRoleDTO.getUrl(), url) && resourceRoleDTO.getRequestMethod().equals(method)) {
                 List<String> roleList = resourceRoleDTO.getRoleList();
                 if (CollectionUtils.isEmpty(roleList)) {

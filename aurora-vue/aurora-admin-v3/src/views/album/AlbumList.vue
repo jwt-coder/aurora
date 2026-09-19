@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, h, onMounted } from 'vue'
+import { ref, h, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NIcon, NPopconfirm, NPagination, useMessage, NModal, NForm, NFormItem, NInput, NRadioGroup, NRadio, NUpload } from 'naive-ui'
 import { AddOutline, RefreshOutline, ImageOutline } from '@vicons/ionicons5'
@@ -157,13 +157,17 @@ const pagination = ref({
   total: 0
 })
 
+// 获取相册列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchAlbums() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getAlbumsApi({
     current: pagination.value.current,
     size: pagination.value.pageSize,
     keywords: keywords.value
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     // 处理数据，确保字段名一致
     albumList.value = (res.data.records || []).map(album => ({
       ...album,
@@ -177,6 +181,7 @@ function fetchAlbums() {
     pagination.value.total = res.data.count || 0
     loading.value = false
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取相册列表失败:', err)
     message.error('获取相册列表失败')
     loading.value = false
@@ -291,7 +296,8 @@ function handleGoToDelete() {
   router.push('/albums/delete')
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchAlbums()
 })
 </script>

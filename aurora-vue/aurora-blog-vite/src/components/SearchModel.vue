@@ -242,7 +242,7 @@
 
 <script lang="ts">
 import { useSearchStore } from '@/stores/search'
-import { computed, defineComponent, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue'
+import { computed, defineComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import api from '@/api/api'
@@ -271,13 +271,6 @@ export default defineComponent({
         if (searchInput.value) searchInput.value.focus()
       }, 200)
     })
-    onUpdated(() => {
-      keywords.value = ''
-      searchResults.value = []
-      setTimeout(() => {
-        if (searchInput.value) searchInput.value.focus()
-      }, 200)
-    })
     onUnmounted(() => {
       document.body.classList.remove('modal--active')
     })
@@ -288,8 +281,14 @@ export default defineComponent({
           reloadRecentResult()
         }
         openModal.value = status
+        if (status) {
+          keywords.value = ''
+          searchResults.value = []
+          isEmpty.value = false
+        }
         setTimeout(() => {
           openSearchContainer.value = status
+          if (status && searchInput.value) searchInput.value.focus()
         }, 200)
       }
     )

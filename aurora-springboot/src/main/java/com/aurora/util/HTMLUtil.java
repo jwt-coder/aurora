@@ -1,6 +1,7 @@
 package com.aurora.util;
 
 import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
+import org.springframework.web.util.HtmlUtils;
 
 public class HTMLUtil {
 
@@ -17,11 +18,15 @@ public class HTMLUtil {
             .enableUrlCheck(false)
             .init();
 
+    /**
+     * 对评论内容做 HTML 转义，防止 XSS。
+     * 保留换行符 \n，由前端负责将换行渲染为 <br>。
+     */
     public static String filter(String source) {
-        source = source.replaceAll("(?!<(img).*?>)<.*?>", "")
-                .replaceAll("(onload(.*?)=)", "")
-                .replaceAll("(onerror(.*?)=)", "");
-        return deleteHMTLTag(source);
+        if (source == null) {
+            return null;
+        }
+        return HtmlUtils.htmlEscape(source);
     }
 
     public static String deleteHMTLTag(String source) {

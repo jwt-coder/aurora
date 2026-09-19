@@ -53,10 +53,25 @@ CREATE TABLE `t_article`  (
   `type` tinyint(1) NOT NULL DEFAULT 1 COMMENT '文章类型 1原创 2转载 3翻译',
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '访问密码',
   `original_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '原文链接',
+  `visit_count` int NOT NULL DEFAULT 0 COMMENT '访问量',
+  `like_count` int NOT NULL DEFAULT 0 COMMENT '点赞数',
   `create_time` datetime NOT NULL COMMENT '发表时间',
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 135 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_user_collect
+-- ----------------------------
+DROP TABLE IF EXISTS `t_user_collect`;
+CREATE TABLE `t_user_collect`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL COMMENT '用户id（t_user_auth主键，与登录token中的id一致）',
+  `article_id` int NOT NULL COMMENT '文章id',
+  `create_time` datetime NOT NULL COMMENT '收藏时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_user_article`(`user_id` ASC, `article_id` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_article
@@ -186,7 +201,6 @@ CREATE TABLE `t_job`  (
 -- Records of t_job
 -- ----------------------------
 INSERT INTO `t_job` VALUES (81, '统计用户地域分布', '默认', 'auroraQuartz.statisticalUserArea', '0 0,30 * * * ?', 3, 1, 1, '2022-08-11 21:49:27', '2022-08-13 08:49:47', '统计用户的地域分布');
-INSERT INTO `t_job` VALUES (82, '统计访问量', '默认', 'auroraQuartz.saveUniqueView', '0 0 0 * * ?', 3, 1, 1, '2022-08-12 16:35:11', NULL, '向数据库中写入每天的访问量');
 INSERT INTO `t_job` VALUES (83, '清空redis访客记录', '默认', 'auroraQuartz.clear', '0 0 1 * * ?', 3, 1, 1, '2022-08-12 16:36:30', '2022-08-13 08:47:48', '清空redis访客记录');
 INSERT INTO `t_job` VALUES (84, '百度SEO', '默认', 'auroraQuartz.baiduSeo', '0 0/10 * * * ?', 3, 1, 1, '2022-08-13 21:19:08', '2022-08-19 14:13:52', '百度SEO');
 INSERT INTO `t_job` VALUES (85, '清理定时任务日志', '默认', 'auroraQuartz.clearJobLogs', '0 0 0 * * ?', 3, 1, 1, '2022-08-13 21:26:21', NULL, '清理定时任务日志');
@@ -840,6 +854,18 @@ CREATE TABLE `t_unique_view`  (
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1539 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for t_visitor_area
+-- ----------------------------
+DROP TABLE IF EXISTS `t_visitor_area`;
+CREATE TABLE `t_visitor_area`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '省份名称',
+  `value` int NOT NULL DEFAULT 0 COMMENT '访客数量',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of t_unique_view

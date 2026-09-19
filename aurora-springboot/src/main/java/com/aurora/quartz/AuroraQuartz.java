@@ -1,12 +1,11 @@
 package com.aurora.quartz;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSON;
+import com.aurora.handler.FilterInvocationSecurityMetadataSourceImpl;
 import com.aurora.model.dto.ArticleSearchDTO;
 import com.aurora.model.dto.UserAreaDTO;
 import com.aurora.entity.*;
 import com.aurora.mapper.ElasticsearchMapper;
-import com.aurora.mapper.UniqueViewMapper;
 import com.aurora.mapper.UserAuthMapper;
 import com.aurora.service.*;
 import com.aurora.util.BeanCopyUtil;
@@ -21,8 +20,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,9 +46,6 @@ public class AuroraQuartz {
     private RoleResourceService roleResourceService;
 
     @Autowired
-    private UniqueViewMapper uniqueViewMapper;
-
-    @Autowired
     private UserAuthMapper userAuthMapper;
 
     @Autowired
@@ -63,18 +57,17 @@ public class AuroraQuartz {
     @Autowired
     private SystemConfigProviderService configProvider;
 
-    public void saveUniqueView() {
-        Long count = redisService.sSize(UNIQUE_VISITOR);
-        UniqueView uniqueView = UniqueView.builder()
-                .createTime(LocalDateTimeUtil.offset(LocalDateTime.now(), -1, ChronoUnit.DAYS))
-                .viewsCount(Optional.of(count.intValue()).orElse(0))
-                .build();
-        uniqueViewMapper.insert(uniqueView);
-    }
+    @Autowired
+    private FilterInvocationSecurityMetadataSourceImpl filterInvocationSecurityMetadataSource;
+
+    // "统计访问量"任务（auroraQuartz.saveUniqueView）已退役：访问量改为 report() 实时落库 t_unique_view，
+    // 方法已删除。注意：部署本版本前需先执行升级 SQL 删除 t_job 中的注册（或在后台停用该任务），
+    // 否则凌晨调度触发时会报"方法不存在"的错误日志（不影响其它功能）。
 
     public void clear() {
+        // 每天凌晨清空访客去重集合，重新统计当天新访客；
+        // 访客地区已实时落库 t_visitor_area，不再清空
         redisService.del(UNIQUE_VISITOR);
-        redisService.del(VISITOR_AREA);
     }
 
     public void statisticalUserArea() {
@@ -126,6 +119,8 @@ public class AuroraQuartz {
                     .build());
         }
         roleResourceService.saveBatch(roleResources);
+        // 资源-角色关系变更后清空权限元数据缓存，下次请求重新加载
+        filterInvocationSecurityMetadataSource.clearDataSource();
     }
 
     public void importDataIntoES() {

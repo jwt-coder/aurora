@@ -63,6 +63,7 @@ public class LocalUploadStrategyImpl extends AbstractUploadStrategyImpl {
 
     @Override
     public String getFileAccessUrl(String filePath) {
+        // 后端映射为 /images/**，但前端访问统一走 /api 前缀（代理层剥掉 /api 转发到后端），与库中存量 URL 保持一致
         return "/api/images/" + filePath;
     }
 }

@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+
+import static com.aurora.constant.RedisConstant.LOGIN_USER;
 import java.util.stream.Collectors;
 
 import static com.aurora.constant.RedisConstant.USER_CODE_KEY;
@@ -149,11 +151,14 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
 
     @Override
     public PageResultDTO<UserOnlineDTO> listOnlineUsers(ConditionVO conditionVO) {
-        Map<String, Object> userMaps = redisService.hGetAll("login_user");
-        Collection<Object> values = userMaps.values();
+        // 在线用户改为独立 key（login_user:userId）存储，这里按前缀扫描
+        Set<String> keys = redisService.keys(LOGIN_USER + ":*");
         ArrayList<UserDetailsDTO> userDetailsDTOs = new ArrayList<>();
-        for (Object value : values) {
-            userDetailsDTOs.add((UserDetailsDTO) value);
+        for (String key : keys) {
+            Object value = redisService.get(key);
+            if (value instanceof UserDetailsDTO) {
+                userDetailsDTOs.add((UserDetailsDTO) value);
+            }
         }
         List<UserOnlineDTO> userOnlineDTOs = BeanCopyUtil.copyList(userDetailsDTOs, UserOnlineDTO.class);
         List<UserOnlineDTO> onlineUsers = userOnlineDTOs.stream()

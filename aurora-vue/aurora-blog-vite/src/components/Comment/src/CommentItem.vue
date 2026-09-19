@@ -4,7 +4,8 @@
       <Avatar :url="comment.avatar" />
       <div class="max-w-full-calc space-y-5">
         <div class="bg-white text-primary p-4 rounded-md relative shadow-md reply" style="width: fit-content">
-          <p class="commentContent" v-html="comment.commentContent.replaceAll('\n', '<br>')" />
+          <!-- 后端入库前已做 HTML 全量转义，这里不能再转义一次，否则实体会显示成字面文本 -->
+          <p class="commentContent" v-html="(comment.commentContent || '').replaceAll('\n', '<br>')" />
           <div class="flex justify-between mt-3 text-xs text-gray-400 space-x-3 md:space-x-16">
             <span>{{ comment.nickname }} | {{ time }}</span>
             <div>

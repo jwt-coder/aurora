@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onActivated } from 'vue'
 import { NButton, NSpace, NTag, NPopconfirm, NAvatar, NPagination, useMessage } from 'naive-ui'
 import { CheckmarkOutline, TrashOutline } from '@vicons/ionicons5'
 import { getCommentsApi, reviewCommentsApi, deleteCommentsApi } from '@/api/comment'
@@ -243,7 +243,10 @@ const columns = [
   }
 ]
 
+// 获取评论列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchComments() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getCommentsApi({
     current: pagination.page,
@@ -252,13 +255,17 @@ function fetchComments() {
     keywords: searchForm.keywords,
     type: searchForm.type
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     commentList.value = res.data.records || []
     pagination.itemCount = res.data.count || 0
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取评论列表失败:', err)
     message.error('获取评论列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -334,7 +341,8 @@ function handlePageSizeChange(pageSize) {
   fetchComments()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchComments()
 })
 </script>

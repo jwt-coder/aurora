@@ -115,7 +115,7 @@ export default defineComponent({
     const router = useRouter()
     const { t } = useI18n()
     const handleAuthorClick = (link: string) => {
-      if (link === '') link = window.location.href
+      if (!link) link = window.location.href
       window.open(link)
     }
     const toArticle = () => {

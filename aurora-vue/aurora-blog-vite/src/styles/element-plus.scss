@@ -1,0 +1,208 @@
+/**
+ * Element Plus 主题层：把 EP 组件统一到 aurora 主题
+ * - 主色跟随 --text-accent（浅色 #e93796 品红 / 深色 #0fb6d6 青色）
+ * - 主要操作按钮使用品牌渐变 --main-gradient（与头部标题、区块下划线一致）
+ * - 弹窗 / 抽屉 / 输入框自动适配深浅两套主题
+ * 本文件需在 element-plus/theme-chalk 之后引入（见 main.ts）
+ */
+
+:root,
+body.theme-light {
+  --el-color-primary: #e93796;
+  --el-color-primary-light-3: #f073b6;
+  --el-color-primary-light-5: #f49bcd;
+  --el-color-primary-light-7: #f8c3df;
+  --el-color-primary-light-8: #fbd7eb;
+  --el-color-primary-light-9: #fdebf5;
+  --el-color-primary-dark-2: #ba2c78;
+  --el-border-radius-base: 8px;
+}
+
+body.theme-dark {
+  --el-color-primary: #0fb6d6;
+  --el-color-primary-light-3: #57cbe2;
+  --el-color-primary-light-5: #87dbeb;
+  --el-color-primary-light-7: #b7eaf4;
+  --el-color-primary-light-8: #cff0f9;
+  --el-color-primary-light-9: #1f2a33;
+  --el-color-primary-dark-2: #0c92ab;
+  --el-border-radius-base: 8px;
+}
+
+/* ---------- 弹窗 ---------- */
+.el-dialog {
+  border-radius: 16px !important;
+  background: var(--background-secondary) !important;
+  box-shadow: var(--accent-shadow) !important;
+  overflow: hidden;
+}
+.el-dialog__header {
+  padding: 0;
+  margin: 0;
+}
+.el-dialog__headerbtn {
+  top: 18px !important;
+  right: 18px !important;
+  font-size: 18px;
+  color: var(--text-dim);
+  transition: color 0.2s ease;
+  &:hover {
+    color: var(--text-accent);
+  }
+}
+.el-dialog__body {
+  padding: 28px;
+}
+.el-dialog__title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-title-h2);
+}
+
+/* 自定义标题（Controls 等页面使用）：标题下带一条品牌渐变短线，与区块标题语言一致 */
+.dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title-h2);
+  margin-bottom: 6px;
+  &::after {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--main-gradient);
+    margin-top: 8px;
+  }
+}
+
+/* ---------- 抽屉（用户中心） ---------- */
+.el-drawer {
+  background: var(--background-primary) !important;
+}
+.el-drawer__body {
+  padding: 24px;
+}
+
+/* ---------- 表单 ---------- */
+.el-form-item {
+  margin-bottom: 20px;
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+.el-form-item__label {
+  color: var(--text-normal);
+  font-weight: 500;
+  text-align: left;
+}
+.el-input__inner {
+  color: var(--text-normal) !important;
+  height: 40px;
+  line-height: 40px;
+  &::placeholder {
+    color: var(--text-dim);
+  }
+}
+.el-input__wrapper,
+.el-textarea__inner {
+  background-color: var(--background-primary-alt) !important;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+.el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--text-faint) inset !important;
+  &:hover {
+    box-shadow: 0 0 0 1px var(--text-accent) inset !important;
+  }
+  &.is-focus {
+    box-shadow: 0 0 0 1px var(--text-accent) inset, 0 0 0 3px var(--bg-accent-05) !important;
+  }
+}
+.el-textarea__inner {
+  color: var(--text-normal);
+  box-shadow: 0 0 0 1px var(--text-faint) inset;
+  &:hover {
+    box-shadow: 0 0 0 1px var(--text-accent) inset;
+  }
+  &:focus {
+    box-shadow: 0 0 0 1px var(--text-accent) inset, 0 0 0 3px var(--bg-accent-05);
+  }
+  &::placeholder {
+    color: var(--text-dim);
+  }
+}
+
+/* ---------- 按钮 ---------- */
+/* 主要操作：品牌渐变（登录/注册/提交等） */
+.el-button--primary {
+  background: var(--main-gradient);
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  transition: transform 0.18s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.18s ease;
+  &:hover,
+  &:focus {
+    background: var(--main-gradient);
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  &.is-disabled {
+    opacity: 0.45;
+  }
+}
+/* 次要操作（取消等）：幽灵按钮 */
+.el-button--default {
+  background: transparent;
+  border: 1px solid var(--text-faint);
+  color: var(--text-normal);
+  transition: border-color 0.18s ease, color 0.18s ease;
+  &:hover,
+  &:focus {
+    background: var(--bg-accent-05);
+    border-color: var(--text-accent);
+    color: var(--text-accent);
+  }
+}
+/* 弹窗里的按钮统一高度与圆角；表单直接子按钮铺满（提交/取消），行内按钮保持紧凑 */
+.el-dialog .el-button,
+.el-drawer .el-button {
+  height: 42px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.el-dialog .el-form-item > .el-button {
+  width: 100%;
+}
+
+/* ---------- 其它 ---------- */
+/* 自定义表单小标签（站点名称/头像/链接等） */
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+/* 输入框内嵌操作区（发送验证码等） */
+.el-input-group__append {
+  background: transparent !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  padding: 0 14px !important;
+  &:hover {
+    background: var(--bg-accent-05) !important;
+  }
+  .text {
+    color: var(--text-accent);
+    font-weight: 500;
+  }
+}
+/* 图形验证码图片圆角 */
+.captcha-img,
+.el-dialog img[class*='captcha'] {
+  border-radius: 8px;
+}

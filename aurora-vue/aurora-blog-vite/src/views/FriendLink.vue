@@ -102,7 +102,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, provide, computed, toRefs, onMounted, getCurrentInstance } from 'vue';
+import { defineComponent, reactive, provide, computed, toRefs, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Sidebar, Profile } from '../components/Sidebar';
 import Breadcrumb from '@/components/Breadcrumb.vue';
@@ -181,16 +181,24 @@ export default defineComponent({
         'haveMore',
         computed(() => reactiveData.haveMore)
     );
-    emitter.on('friendLinkFetchComment', () => {
+    const handleFetchComment = () => {
       pageInfo.current = 1;
       reactiveData.isReload = true;
       fetchComments();
-    });
-    emitter.on('friendLinkFetchReplies', (index) => {
+    };
+    const handleFetchReplies = (index: any) => {
       fetchReplies(index);
-    });
-    emitter.on('friendLinkLoadMore', () => {
+    };
+    const handleLoadMore = () => {
       fetchComments();
+    };
+    emitter.on('friendLinkFetchComment', handleFetchComment);
+    emitter.on('friendLinkFetchReplies', handleFetchReplies);
+    emitter.on('friendLinkLoadMore', handleLoadMore);
+    onUnmounted(() => {
+      emitter.off('friendLinkFetchComment', handleFetchComment);
+      emitter.off('friendLinkFetchReplies', handleFetchReplies);
+      emitter.off('friendLinkLoadMore', handleLoadMore);
     });
 
     const fetchLinks = () => {

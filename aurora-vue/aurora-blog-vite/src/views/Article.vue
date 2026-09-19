@@ -72,6 +72,12 @@
                 {{ readTime }}
               </span>
             </span>
+            <span v-if="!loading && article.viewCount !== undefined && article.viewCount !== null">
+              <svg-icon icon-class="eye" style="stroke: white" />
+              <span class="pl-2 opacity-70">
+                {{ article.viewCount }}
+              </span>
+            </span>
           </div>
           <div v-else class="post-stats">
             <span>
@@ -96,7 +102,7 @@
       <div>
         <template v-if="article.articleContent">
           <div class="post-html" ref="articleRef" v-html="article.articleContent" /><br/>
-          <div class="security post-html" ref="articleRef">
+          <div class="security post-html">
             <ul>
               <li class="author">
                 <svg-icon icon-class="author" size="0.9rem" style="margin-right:0.3rem"></svg-icon>
@@ -115,6 +121,29 @@
                 许可协议。转载请注明文章出处！
               </li>
             </ul>
+          </div>
+          <div class="article-actions">
+            <button
+              class="action-button"
+              :class="{ 'action-active': article.isLiked }"
+              @click="handleLike">
+              <svg viewBox="0 0 24 24" class="action-icon" :class="{ 'icon-pop': article.isLiked }">
+                <path
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              <span>{{ article.isLiked ? '已点赞' : '点赞' }}</span>
+              <span class="action-count">{{ article.likeCount || 0 }}</span>
+            </button>
+            <button
+              class="action-button"
+              :class="{ 'action-active': article.isCollected }"
+              @click="handleCollect">
+              <svg viewBox="0 0 24 24" class="action-icon" :class="{ 'icon-pop': article.isCollected }">
+                <path
+                  d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+              </svg>
+              <span>{{ article.isCollected ? '已收藏' : '收藏' }}</span>
+            </button>
           </div>
         </template>
         <div v-else class="bg-ob-deep-800 px-14 py-16 rounded-2xl shadow-xl block min-h-screen">
@@ -179,6 +208,7 @@ import { ArticleCard } from '@/components/ArticleCard'
 import '@/styles/prism-aurora-future.css'
 import { useCommonStore } from '@/stores/common'
 import { useCommentStore } from '@/stores/comment'
+import { useUserStore } from '@/stores/user'
 import Sticky from '@/components/Sticky.vue'
 import Prism from 'prismjs'
 import tocbot from 'tocbot'
@@ -194,6 +224,7 @@ export default defineComponent({
     const proxy: any = getCurrentInstance()?.appContext.config.globalProperties
     const commonStore = useCommonStore()
     const commentStore = useCommentStore()
+    const userStore = useUserStore()
     const route = useRoute()
     const router = useRouter()
     const { t } = useI18n()
@@ -226,6 +257,9 @@ export default defineComponent({
       commonStore.resetHeaderImage()
       reactiveData.article = ''
       tocbot.destroy()
+      emitter.off('articleFetchComment', handleFetchComment)
+      emitter.off('articleFetchReplies', handleFetchReplies)
+      emitter.off('articleLoadMore', handleLoadMore)
     })
     onBeforeRouteUpdate((to) => {
       reactiveData.article = ''
@@ -250,18 +284,21 @@ export default defineComponent({
       'haveMore',
       computed(() => reactiveData.haveMore)
     )
-    emitter.on('articleFetchComment', () => {
+    const handleFetchComment = () => {
       pageInfo.current = 1
       reactiveData.isReload = true
       fetchComments()
-    })
-    emitter.on('articleFetchReplies', (index) => {
+    }
+    const handleFetchReplies = (index: any) => {
       fetchReplies(index)
-    })
-
-    emitter.on('articleLoadMore', () => {
+    }
+    const handleLoadMore = () => {
       fetchComments()
-    })
+    }
+    emitter.on('articleFetchComment', handleFetchComment)
+    emitter.on('articleFetchReplies', handleFetchReplies)
+
+    emitter.on('articleLoadMore', handleLoadMore)
     const handlePreview = (index: any) => {
       v3ImgPreviewFn({ images: reactiveData.images, index: reactiveData.images.indexOf(index) })
     }
@@ -297,51 +334,86 @@ export default defineComponent({
     const fetchArticle = () => {
       loading.value = true
       api.getArticeById(reactiveData.articleId).then(({ data }) => {
-        if (data.code === 52003) {
-          proxy.$notify({
-            title: 'Error',
-            message: '文章密码认证未通过',
-            type: 'error'
-          })
-          router.push({ path: '/出错啦' })
-          return
-        }
-        if (data.data === null) {
-          router.push({ path: '/出错啦' })
-          return
-        }
-        commonStore.setHeaderImage(data.data.articleCover)
-        new Promise((resolve) => {
-          data.data.articleContent = markdownToHtml(data.data.articleContent)
-          resolve(data.data)
-        }).then((article: any) => {
-          reactiveData.article = article
-          reactiveData.wordNum = Math.round(deleteHTMLTag(article.articleContent).length / 100) / 10 + 'k'
-          reactiveData.readTime = Math.round(deleteHTMLTag(article.articleContent).length / 400) + 'mins'
+        try {
+          if (data.code === 52003) {
+            proxy.$notify({
+              title: 'Error',
+              message: '文章密码认证未通过',
+              type: 'error'
+            })
+            router.push({ path: '/出错啦' })
+            return
+          }
+          if (data.flag && data.data) {
+            commonStore.setHeaderImage(data.data.articleCover)
+            new Promise((resolve) => {
+              data.data.articleContent = markdownToHtml(data.data.articleContent)
+              resolve(data.data)
+            }).then((article: any) => {
+              reactiveData.article = article
+              reactiveData.wordNum = Math.round(deleteHTMLTag(article.articleContent).length / 100) / 10 + 'k'
+              reactiveData.readTime = Math.round(deleteHTMLTag(article.articleContent).length / 400) + 'mins'
+              nextTick(() => {
+                Prism.highlightAll()
+                initTocbot()
+              })
+            })
+            new Promise((resolve) => {
+              data.data.preArticleCard.articleContent = markdownToHtml(data.data.preArticleCard.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+              resolve(data.data.preArticleCard)
+            }).then((preArticleCard: any) => {
+              reactiveData.preArticleCard = preArticleCard
+            })
+            new Promise((resolve) => {
+              data.data.nextArticleCard.articleContent = markdownToHtml(data.data.nextArticleCard.articleContent)
+                .replace(/<\/?[^>]*>/g, '')
+                .replace(/[|]*\n/, '')
+                .replace(/&npsp;/gi, '')
+              resolve(data.data.nextArticleCard)
+            }).then((nextArticleCard) => {
+              reactiveData.nextArticleCard = nextArticleCard
+            })
+          } else {
+            router.push({ path: '/出错啦' })
+          }
+        } catch (error) {
+          // 拦截器已弹出错误提示，这里不再重复弹窗
+        } finally {
           loading.value = false
-          nextTick(() => {
-            Prism.highlightAll()
-            initTocbot()
+        }
+      })
+    }
+    const handleLike = () => {
+      if (!reactiveData.article) return
+      api.likeArticle(reactiveData.articleId).then(({ data }) => {
+        if (data.flag && data.data) {
+          reactiveData.article.likeCount = data.data.likeCount
+          reactiveData.article.isLiked = data.data.isLiked
+        }
+      })
+    }
+    const handleCollect = () => {
+      if (!userStore.userInfo || userStore.userInfo === '') {
+        proxy.$notify({
+          title: 'Warning',
+          message: '请登录后收藏',
+          type: 'warning'
+        })
+        return
+      }
+      if (!reactiveData.article) return
+      api.collectArticle(reactiveData.articleId).then(({ data }) => {
+        if (data.flag && data.data !== null && data.data !== undefined) {
+          reactiveData.article.isCollected = data.data
+          proxy.$notify({
+            title: 'Success',
+            message: data.data ? '收藏成功，可在用户中心查看' : '已取消收藏',
+            type: 'success'
           })
-        })
-        new Promise((resolve) => {
-          data.data.preArticleCard.articleContent = markdownToHtml(data.data.preArticleCard.articleContent)
-            .replace(/<\/?[^>]*>/g, '')
-            .replace(/[|]*\n/, '')
-            .replace(/&npsp;/gi, '')
-          resolve(data.data.preArticleCard)
-        }).then((preArticleCard: any) => {
-          reactiveData.preArticleCard = preArticleCard
-        })
-        new Promise((resolve) => {
-          data.data.nextArticleCard.articleContent = markdownToHtml(data.data.nextArticleCard.articleContent)
-            .replace(/<\/?[^>]*>/g, '')
-            .replace(/[|]*\n/, '')
-            .replace(/&npsp;/gi, '')
-          resolve(data.data.nextArticleCard)
-        }).then((nextArticleCard) => {
-          reactiveData.nextArticleCard = nextArticleCard
-        })
+        }
       })
     }
     const fetchComments = () => {
@@ -352,18 +424,20 @@ export default defineComponent({
         size: pageInfo.size
       }
       api.getComments(params).then(({ data }) => {
-        if (reactiveData.isReload) {
-          reactiveData.comments = data.data.records
-          reactiveData.isReload = false
-        } else {
-          reactiveData.comments.push(...data.data.records)
+        if (data.flag && data.data) {
+          if (reactiveData.isReload) {
+            reactiveData.comments = data.data.records
+            reactiveData.isReload = false
+          } else {
+            reactiveData.comments.push(...data.data.records)
+          }
+          if (data.data.count <= reactiveData.comments.length) {
+            reactiveData.haveMore = false
+          } else {
+            reactiveData.haveMore = true
+          }
+          pageInfo.current++
         }
-        if (data.data.count <= reactiveData.comments.length) {
-          reactiveData.haveMore = false
-        } else {
-          reactiveData.haveMore = true
-        }
-        pageInfo.current++
       })
     }
     const fetchReplies = (index: any) => {
@@ -372,7 +446,7 @@ export default defineComponent({
       })
     }
     const handleAuthorClick = (link: string) => {
-      if (link === '') link = window.location.href
+      if (!link) link = window.location.href
       window.location.href = link
     }
     const toPageTop = () => {
@@ -391,6 +465,8 @@ export default defineComponent({
       ...toRefs(reactiveData),
       isMobile: computed(() => commonStore.isMobile),
       handleAuthorClick,
+      handleLike,
+      handleCollect,
       loading,
       t
     }
@@ -483,7 +559,14 @@ export default defineComponent({
   }
 }
 .pre-and-next-article {
-  .article-content {
+  height: 100%;
+  :deep(.article-container) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  :deep(.article-content) {
+    flex: 1;
     p {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -494,6 +577,61 @@ export default defineComponent({
     .article-footer {
       margin-top: 13px;
     }
+  }
+}
+.article-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 2.5rem 0 1rem;
+}
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.4rem;
+  border: 1px solid var(--text-accent);
+  border-radius: 9999px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.165, 0.84, 0.44, 1), background 180ms ease, color 180ms ease;
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+.action-button.action-active {
+  background: var(--main-gradient);
+  border-color: transparent;
+  color: #ffffff;
+}
+.action-icon {
+  width: 1.15em;
+  height: 1.15em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.action-button.action-active .action-icon {
+  fill: currentColor;
+}
+.action-count {
+  font-weight: 600;
+}
+.icon-pop {
+  animation: icon-pop 360ms cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+@keyframes icon-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.45);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 .markdown-body .hljs-center {

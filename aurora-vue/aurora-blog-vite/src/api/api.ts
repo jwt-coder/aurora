@@ -93,7 +93,7 @@ export default {
     return axios.post('/api/users/oauth/qq', params)
   },
   report: () => {
-    axios.post('/api/report')
+    return axios.post('/api/report').catch(() => {})
   },
   getTalks: (params: any) => {
     return axios.get('/api/talks', {
@@ -114,5 +114,14 @@ export default {
   },
   accessArticle: (params: any) => {
     return axios.post('/api/articles/access', params)
+  },
+  likeArticle: (articleId: any) => {
+    return axios.post(`/api/articles/${articleId}/like`)
+  },
+  collectArticle: (articleId: any) => {
+    return axios.post(`/api/articles/${articleId}/collect`)
+  },
+  getCollectedArticles: () => {
+    return axios.get('/api/articles/collect')
   }
 }

@@ -255,54 +255,15 @@ const fetchMenus = async () => {
   } catch (error) {
     console.error('获取菜单失败:', error)
 
-    // 使用默认菜单
+    // 菜单加载失败时不再回退到全量管理员菜单，展示空菜单并提示用户
     menuOptions.value = [
-      {
-        label: '首页',
-        key: '/home',
-        icon: iconMap.home
-      },
-      {
-        label: '发布文章',
-        key: '/articles',
-        icon: iconMap.article
-      },
-      {
-        label: '文章列表',
-        key: '/article-list',
-        icon: iconMap.article
-      },
-      {
-        label: '分类管理',
-        key: '/categories',
-        icon: iconMap.category
-      },
-      {
-        label: '标签管理',
-        key: '/tags',
-        icon: iconMap.tag
-      },
-      {
-        label: '评论管理',
-        key: '/comments',
-        icon: iconMap.comment
-      },
-      {
-        label: '用户管理',
-        key: '/users',
-        icon: iconMap.user
-      },
-      {
-        label: '角色管理',
-        key: '/roles',
-        icon: iconMap.role
-      },
       {
         label: '退出登录',
         key: 'logout',
         icon: iconMap.logout
       }
     ]
+    message.error('菜单加载失败，请刷新重试')
   }
 }
 

@@ -42,5 +42,10 @@ public interface ArticleMapper extends BaseMapper<Article> {
     List<ArticleAdminDTO> listArticlesAdmin(@Param("current") Long current, @Param("size") Long size, @Param("conditionVO") ConditionVO conditionVO);
 
     List<ArticleStatisticsDTO> listArticleStatistics();
+
+    /**
+     * 查询用户收藏的文章卡片列表（按收藏时间倒序）
+     */
+    List<ArticleCardDTO> listCollectedArticles(@Param("userId") Integer userId);
 }
 

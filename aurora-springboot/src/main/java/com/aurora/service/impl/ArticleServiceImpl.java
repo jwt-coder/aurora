@@ -6,6 +6,7 @@ import com.aurora.entity.Article;
 import com.aurora.entity.ArticleTag;
 import com.aurora.entity.Category;
 import com.aurora.entity.Tag;
+import com.aurora.entity.UserCollect;
 import com.aurora.enums.FileExtEnum;
 import com.aurora.enums.FilePathEnum;
 import com.aurora.exception.BizException;
@@ -13,6 +14,7 @@ import com.aurora.mapper.ArticleMapper;
 import com.aurora.mapper.ArticleTagMapper;
 import com.aurora.mapper.CategoryMapper;
 import com.aurora.mapper.TagMapper;
+import com.aurora.mapper.UserCollectMapper;
 import com.aurora.service.ArticleService;
 import com.aurora.service.ArticleTagService;
 import com.aurora.service.RedisService;
@@ -21,10 +23,12 @@ import com.aurora.service.TagService;
 import com.aurora.strategy.context.SearchStrategyContext;
 import com.aurora.strategy.context.UploadStrategyContext;
 import com.aurora.util.BeanCopyUtil;
+import com.aurora.util.IpUtil;
 import com.aurora.util.PageUtil;
 import com.aurora.util.UserUtil;
 import com.aurora.model.vo.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
@@ -32,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,10 +44,12 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
 
 import static com.aurora.constant.RabbitMQConstant.SUBSCRIBE_EXCHANGE;
 import static com.aurora.constant.RedisConstant.*;
@@ -86,6 +93,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Autowired
     private SystemConfigProviderService configProvider;
 
+    @Autowired
+    private UserCollectMapper userCollectMapper;
+
     @SneakyThrows
     @Override
     public TopAndFeaturedArticlesDTO listTopAndFeaturedArticles() {
@@ -108,39 +118,43 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDelete, 0)
                 .in(Article::getStatus, 1, 2);
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> articleMapper.selectCount(queryWrapper));
+        Integer count = articleMapper.selectCount(queryWrapper);
         List<ArticleCardDTO> articles = articleMapper.listArticles(PageUtil.getLimitCurrent(), PageUtil.getSize());
-        
+
         // 对加密文章进行内容过滤
         articles.forEach(article -> {
             if (article.getStatus() != null && article.getStatus().equals(2)) {
                 article.setArticleContent("");
             }
         });
-        
-        return new PageResultDTO<>(articles, asyncCount.get());
+
+        return new PageResultDTO<>(articles, count);
     }
 
     @SneakyThrows
     @Override
     public PageResultDTO<ArticleCardDTO> listArticlesByCategoryId(Integer categoryId) {
-        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>().eq(Article::getCategoryId, categoryId);
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> articleMapper.selectCount(queryWrapper));
+        // count 条件与 getArticlesByCategoryId 的数据查询保持一致：is_delete = 0 且 status in (1, 2)
+        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>()
+                .eq(Article::getCategoryId, categoryId)
+                .eq(Article::getIsDelete, 0)
+                .in(Article::getStatus, 1, 2);
+        Integer count = articleMapper.selectCount(queryWrapper);
         List<ArticleCardDTO> articles = articleMapper.getArticlesByCategoryId(PageUtil.getLimitCurrent(), PageUtil.getSize(), categoryId);
-        
+
         // 对加密文章进行内容过滤
         articles.forEach(article -> {
             if (article.getStatus() != null && article.getStatus().equals(2)) {
                 article.setArticleContent("");
             }
         });
-        
-        return new PageResultDTO<>(articles, asyncCount.get());
+
+        return new PageResultDTO<>(articles, count);
     }
 
     @SneakyThrows
     @Override
-    public ArticleDTO getArticleById(Integer articleId) {
+    public ArticleDTO getArticleById(Integer articleId, HttpServletRequest request) {
         Article articleForCheck = articleMapper.selectOne(new LambdaQueryWrapper<Article>().eq(Article::getId, articleId));
         if (Objects.isNull(articleForCheck)) {
             return null;
@@ -156,39 +170,40 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 throw new BizException(ARTICLE_ACCESS_FAIL);
             }
         }
-        updateArticleViewsCount(articleId);
-        CompletableFuture<ArticleDTO> asyncArticle = CompletableFuture.supplyAsync(() -> articleMapper.getArticleById(articleId));
-        CompletableFuture<ArticleCardDTO> asyncPreArticle = CompletableFuture.supplyAsync(() -> {
-            ArticleCardDTO preArticle = articleMapper.getPreArticleById(articleId);
-            if (Objects.isNull(preArticle)) {
-                preArticle = articleMapper.getLastArticle();
-            }
-            return preArticle;
-        });
-        CompletableFuture<ArticleCardDTO> asyncNextArticle = CompletableFuture.supplyAsync(() -> {
-            ArticleCardDTO nextArticle = articleMapper.getNextArticleById(articleId);
-            if (Objects.isNull(nextArticle)) {
-                nextArticle = articleMapper.getFirstArticle();
-            }
-            return nextArticle;
-        });
-        ArticleDTO article = asyncArticle.get();
+        // 访问量直接落库（原子自增），数据库为唯一事实源，避免仅存 Redis 重启丢失
+        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                .eq(Article::getId, articleId)
+                .setSql("visit_count = IFNULL(visit_count, 0) + 1"));
+        ArticleDTO article = articleMapper.getArticleById(articleId);
         if (Objects.isNull(article)) {
             return null;
         }
-        Double score = redisService.zScore(ARTICLE_VIEWS_COUNT, articleId);
-        if (Objects.nonNull(score)) {
-            article.setViewCount(score.intValue());
+        ArticleCardDTO preArticle = articleMapper.getPreArticleById(articleId);
+        if (Objects.isNull(preArticle)) {
+            preArticle = articleMapper.getLastArticle();
         }
-        article.setPreArticleCard(asyncPreArticle.get());
-        article.setNextArticleCard(asyncNextArticle.get());
-        
+        ArticleCardDTO nextArticle = articleMapper.getNextArticleById(articleId);
+        if (Objects.isNull(nextArticle)) {
+            nextArticle = articleMapper.getFirstArticle();
+        }
+        article.setPreArticleCard(preArticle);
+        article.setNextArticleCard(nextArticle);
+
+        // 点赞状态：登录按用户 id 去重，游客按 IP 去重
+        article.setIsLiked(redisService.sIsMember(getLikeUserKey(request), articleId));
+        // 收藏状态：仅登录用户有
+        Integer loginUserId = getLoginUserIdOrNull();
+        article.setIsCollected(Objects.nonNull(loginUserId) && userCollectMapper.selectCount(
+                new LambdaQueryWrapper<UserCollect>()
+                        .eq(UserCollect::getUserId, loginUserId)
+                        .eq(UserCollect::getArticleId, articleId)) > 0);
+
         // 设置系统网站URL而不是用户个人网站
         if (article.getAuthor() != null) {
             String websiteUrl = configProvider.getConfig("website.url", "https://www.gysy.ltd");
             article.getAuthor().setWebsite(websiteUrl);
         }
-        
+
         return article;
     }
 
@@ -208,25 +223,31 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @SneakyThrows
     @Override
     public PageResultDTO<ArticleCardDTO> listArticlesByTagId(Integer tagId) {
-        LambdaQueryWrapper<ArticleTag> queryWrapper = new LambdaQueryWrapper<ArticleTag>().eq(ArticleTag::getTagId, tagId);
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> articleTagMapper.selectCount(queryWrapper));
+        // count 条件与 listArticlesByTagId 的数据查询保持一致：is_delete = 0 且 status in (1, 2)
+        Integer count = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                .eq(Article::getIsDelete, 0)
+                .in(Article::getStatus, 1, 2)
+                .inSql(Article::getId, "SELECT article_id FROM t_article_tag WHERE tag_id = " + tagId));
         List<ArticleCardDTO> articles = articleMapper.listArticlesByTagId(PageUtil.getLimitCurrent(), PageUtil.getSize(), tagId);
-        
+
         // 对加密文章进行内容过滤
         articles.forEach(article -> {
             if (article.getStatus() != null && article.getStatus().equals(2)) {
                 article.setArticleContent("");
             }
         });
-        
-        return new PageResultDTO<>(articles, asyncCount.get());
+
+        return new PageResultDTO<>(articles, count);
     }
 
     @SneakyThrows
     @Override
     public PageResultDTO<ArchiveDTO> listArchives() {
-        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>().eq(Article::getIsDelete, 0).eq(Article::getStatus, 1);
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> articleMapper.selectCount(queryWrapper));
+        // count 条件与 listArchives 的数据查询保持一致：is_delete = 0 且 status in (1, 2)
+        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<Article>()
+                .eq(Article::getIsDelete, 0)
+                .in(Article::getStatus, 1, 2);
+        Integer count = articleMapper.selectCount(queryWrapper);
         List<ArticleCardDTO> articles = articleMapper.listArchives(PageUtil.getLimitCurrent(), PageUtil.getSize());
         HashMap<String, List<ArticleCardDTO>> map = new HashMap<>();
         for (ArticleCardDTO article : articles) {
@@ -257,22 +278,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 return 1;
             } else return Integer.compare(o2Month, o1Month);
         });
-        return new PageResultDTO<>(archiveDTOs, asyncCount.get());
+        return new PageResultDTO<>(archiveDTOs, count);
     }
 
     @SneakyThrows
     @Override
     public PageResultDTO<ArticleAdminDTO> listArticlesAdmin(ConditionVO conditionVO) {
-        CompletableFuture<Integer> asyncCount = CompletableFuture.supplyAsync(() -> articleMapper.countArticleAdmins(conditionVO));
+        // 访问量已切到 t_article.visit_count（数据库事实源），由 SQL 直接返回
+        Integer count = articleMapper.countArticleAdmins(conditionVO);
         List<ArticleAdminDTO> articleAdminDTOs = articleMapper.listArticlesAdmin(PageUtil.getLimitCurrent(), PageUtil.getSize(), conditionVO);
-        Map<Object, Double> viewsCountMap = redisService.zAllScore(ARTICLE_VIEWS_COUNT);
-        articleAdminDTOs.forEach(item -> {
-            Double viewsCount = viewsCountMap.get(item.getId());
-            if (Objects.nonNull(viewsCount)) {
-                item.setViewsCount(viewsCount.intValue());
-            }
-        });
-        return new PageResultDTO<>(articleAdminDTOs, asyncCount.get());
+        return new PageResultDTO<>(articleAdminDTOs, count);
     }
 
     @Override
@@ -388,7 +403,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .in(Article::getId, articleIds));
         List<String> urls = new ArrayList<>();
         for (Article article : articles) {
-            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(article.getArticleContent().getBytes())) {
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(article.getArticleContent().getBytes(StandardCharsets.UTF_8))) {
                 String url = uploadStrategyContext.executeUploadStrategy(article.getArticleTitle() + FileExtEnum.MD.getExtName(), inputStream, FilePathEnum.MD.getPath());
                 urls.add(url);
             } catch (Exception e) {
@@ -404,8 +419,96 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return searchStrategyContext.executeSearchStrategy(condition.getKeywords());
     }
 
-    public void updateArticleViewsCount(Integer articleId) {
-        redisService.zIncr(ARTICLE_VIEWS_COUNT, articleId, 1D);
+    @Override
+    public ArticleLikeDTO likeArticle(Integer articleId, HttpServletRequest request) {
+        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getId, articleId)
+                .eq(Article::getIsDelete, 0));
+        if (Objects.isNull(article)) {
+            throw new BizException("文章不存在");
+        }
+        String likeUserKey = getLikeUserKey(request);
+        // 以 Set 操作的返回值判断本次是否产生变更，避免并发双击导致计数与去重集合漂移
+        boolean changed;
+        if (Boolean.TRUE.equals(redisService.sIsMember(likeUserKey, articleId))) {
+            Long removed = redisService.sRemove(likeUserKey, articleId);
+            changed = Objects.nonNull(removed) && removed > 0;
+            if (changed) {
+                articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                        .eq(Article::getId, articleId)
+                        .setSql("like_count = GREATEST(IFNULL(like_count, 1) - 1, 0)"));
+            }
+        } else {
+            Long added = redisService.sAdd(likeUserKey, articleId);
+            changed = Objects.nonNull(added) && added > 0;
+            if (changed) {
+                articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                        .eq(Article::getId, articleId)
+                        .setSql("like_count = IFNULL(like_count, 0) + 1"));
+            }
+        }
+        boolean liked = Boolean.TRUE.equals(redisService.sIsMember(likeUserKey, articleId));
+        Integer likeCount = articleMapper.selectById(articleId).getLikeCount();
+        return ArticleLikeDTO.builder().likeCount(likeCount).isLiked(liked).build();
+    }
+
+    @Override
+    public Boolean collectArticle(Integer articleId) {
+        Integer userId = getLoginUserIdOrNull();
+        if (Objects.isNull(userId)) {
+            throw new BizException("请登录后收藏");
+        }
+        if (Objects.isNull(articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getId, articleId)
+                .eq(Article::getIsDelete, 0)))) {
+            throw new BizException("文章不存在");
+        }
+        UserCollect collect = userCollectMapper.selectOne(new LambdaQueryWrapper<UserCollect>()
+                .eq(UserCollect::getUserId, userId)
+                .eq(UserCollect::getArticleId, articleId));
+        if (Objects.nonNull(collect)) {
+            userCollectMapper.deleteById(collect.getId());
+            return false;
+        }
+        try {
+            userCollectMapper.insert(UserCollect.builder()
+                    .userId(userId)
+                    .articleId(articleId)
+                    .createTime(LocalDateTime.now())
+                    .build());
+        } catch (DuplicateKeyException e) {
+            // 并发双击触发唯一键冲突：视为已收藏
+            return true;
+        }
+        return true;
+    }
+
+    @Override
+    public List<ArticleCardDTO> listCollectedArticles() {
+        Integer userId = getLoginUserIdOrNull();
+        if (Objects.isNull(userId)) {
+            throw new BizException("请登录后查看收藏");
+        }
+        return articleMapper.listCollectedArticles(userId);
+    }
+
+    /**
+     * 点赞去重 key：登录用户按 userId，游客按 IP
+     */
+    private String getLikeUserKey(HttpServletRequest request) {
+        Integer userId = getLoginUserIdOrNull();
+        if (Objects.nonNull(userId)) {
+            return ARTICLE_LIKE_USER + userId;
+        }
+        return ARTICLE_LIKE_USER + "ip:" + IpUtil.getIpAddress(request);
+    }
+
+    private Integer getLoginUserIdOrNull() {
+        try {
+            return UserUtil.getUserDetailsDTO().getId();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Category saveArticleCategory(ArticleVO articleVO) {

@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, h, onActivated } from 'vue'
 import { NButton, NSpace, NTag, NPopconfirm, NPagination, useMessage } from 'naive-ui'
 import { AddOutline, TrashOutline } from '@vicons/ionicons5'
 import { getCategoriesApi, saveCategoryApi, deleteCategoryApi } from '@/api/category'
@@ -152,20 +152,27 @@ const columns = [
   }
 ]
 
+// 获取分类列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchCategories() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getCategoriesApi({
     current: pagination.page,
     size: pagination.pageSize,
     keywords: keywords.value
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     categoryList.value = res.data.records || []
     pagination.itemCount = res.data.count || res.data.total || 0
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取分类列表失败:', err)
     message.error('获取分类列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -243,7 +250,8 @@ function handlePageSizeChange(pageSize) {
   fetchCategories()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchCategories()
 })
 </script>

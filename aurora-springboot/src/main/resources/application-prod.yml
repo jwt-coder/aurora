@@ -98,7 +98,12 @@ logging:
     console: '%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx'
 
 jwt:
-  secret: aurora
+  # 生产环境必须通过环境变量 JWT_SECRET 设置足够强度的密钥（建议 32 字节以上的随机 Base64 字符串），
+  # 否则将使用下方默认值；默认值仅用于本地开发，任何知道它的人都能伪造 token
+  secret: ${JWT_SECRET:aurora-default-secret-change-me-2026}
+
+# 生产环境前面有 Nginx 等反向代理：IpUtil 仅在 remoteAddr 为内网地址时信任代理头中的 IP，
+# Nginx 需配置 proxy_set_header X-Real-IP $remote_addr; 转发真实客户端 IP
 
 qq:
   app-id: 102884037

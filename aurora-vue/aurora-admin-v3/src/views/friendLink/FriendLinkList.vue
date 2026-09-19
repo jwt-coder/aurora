@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, onMounted } from 'vue'
+import { ref, reactive, computed, h, onActivated } from 'vue'
 import { NButton, NSpace, NTag, NAvatar, NPopconfirm, NText, NPagination, useMessage } from 'naive-ui'
 import { AddOutline, TrashOutline } from '@vicons/ionicons5'
 import { getAvatarPlaceholder } from '@/utils/placeholder'
@@ -121,9 +121,10 @@ const showDialog = ref(false)
 const isEdit = ref(false)
 const formRef = ref(null)
 const uploading = ref(false)
-const uploadHeaders = {
-  Authorization: 'Bearer ' + sessionStorage.getItem('token')
-}
+// 上传请求头（computed 动态读取，避免 token 变化后 headers 过期）
+const uploadHeaders = computed(() => ({
+  Authorization: 'Bearer ' + (sessionStorage.getItem('token') || '')
+}))
 
 const searchForm = reactive({
   keywords: ''
@@ -191,7 +192,7 @@ const columns = [
         1: { text: '审核通过', type: 'success' },
         2: { text: '审核未通过', type: 'error' }
       }
-      const status = statusMap[row.isReview]
+      const status = statusMap[row.isReview] || { text: '未知', type: 'default' }
       return h(NTag, { type: status.type }, { default: () => status.text })
     }
   },
@@ -227,22 +228,29 @@ const columns = [
   }
 ]
 
+// 获取友链列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchLinks() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getFriendLinksApi({
     current: pagination.page,
     size: pagination.pageSize,
     keywords: searchForm.keywords
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     linkList.value = res.data.records || []
     // 兼容不同的总数字段名
     const total = res.data.count || res.data.total || 0
     pagination.itemCount = total
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取友链列表失败:', err)
     message.error('获取友链列表失败')
   }).finally(() => {
-    loading.value = false
+    if (requestId === fetchRequestId) {
+      loading.value = false
+    }
   })
 }
 
@@ -343,6 +351,8 @@ function handleUploadSuccess({ file }) {
   if (file.response && file.response.flag) {
     form.linkAvatar = file.response.data
     message.success('图片上传成功')
+  } else if (file.response && (file.response.code === 401 || file.response.code === 40001)) {
+    message.error('登录已过期，请重新登录')
   } else {
     message.error(file.response?.message || '图片上传失败')
   }
@@ -353,7 +363,8 @@ function handleUploadError() {
   message.error('图片上传失败，请重试')
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据
+onActivated(() => {
   fetchLinks()
 })
 </script>

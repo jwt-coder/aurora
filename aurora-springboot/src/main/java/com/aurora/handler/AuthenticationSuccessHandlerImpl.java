@@ -11,7 +11,6 @@ import com.aurora.util.BeanCopyUtil;
 import com.aurora.util.UserUtil;
 import com.aurora.model.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -45,7 +44,7 @@ public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHa
         updateUserInfo();
     }
 
-    @Async
+    // 同步执行：@Async 标注在同类方法上且为自调用时不生效（绕过代理），且本方法依赖 SecurityContextHolder，同步最安全
     public void updateUserInfo() {
         UserAuth userAuth = UserAuth.builder()
                 .id(UserUtil.getUserDetailsDTO().getId())

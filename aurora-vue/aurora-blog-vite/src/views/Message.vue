@@ -20,7 +20,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, onMounted, reactive, toRefs, computed, provide } from 'vue'
+import { defineComponent, onMounted, onUnmounted, reactive, toRefs, computed, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Sidebar, Profile } from '../components/Sidebar'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -57,16 +57,24 @@ export default defineComponent({
       'haveMore',
       computed(() => reactiveData.haveMore)
     )
-    emitter.on('messageFetchComment', () => {
+    const handleFetchComment = () => {
       pageInfo.current = 1
       reactiveData.isReload = true
       fetchComments()
-    })
-    emitter.on('messageFetchReplies', (index) => {
+    }
+    const handleFetchReplies = (index: any) => {
       fetchReplies(index)
-    })
-    emitter.on('messageLoadMore', () => {
+    }
+    const handleLoadMore = () => {
       fetchComments()
+    }
+    emitter.on('messageFetchComment', handleFetchComment)
+    emitter.on('messageFetchReplies', handleFetchReplies)
+    emitter.on('messageLoadMore', handleLoadMore)
+    onUnmounted(() => {
+      emitter.off('messageFetchComment', handleFetchComment)
+      emitter.off('messageFetchReplies', handleFetchReplies)
+      emitter.off('messageLoadMore', handleLoadMore)
     })
     const fetchComments = () => {
       const params = {

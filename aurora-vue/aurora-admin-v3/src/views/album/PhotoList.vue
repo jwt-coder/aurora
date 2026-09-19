@@ -126,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onActivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NButton, NIcon, NModal, NCard, NText, NP, NDivider, NUpload, NUploadDragger, NGrid, NGi, NPagination, NPopconfirm, useMessage } from 'naive-ui'
 import { ArrowBackOutline, CloudUploadOutline, CloseOutline } from '@vicons/ionicons5'
@@ -152,7 +152,10 @@ const pagination = ref({
 
 const albumId = route.params.id
 
+// 获取照片列表（带竞态保护，仅接受最新一次请求的结果）
+let fetchRequestId = 0
 function fetchPhotos() {
+  const requestId = ++fetchRequestId
   loading.value = true
   getPhotosApi({
     albumId: albumId,
@@ -160,6 +163,7 @@ function fetchPhotos() {
     current: pagination.value.page,
     size: pagination.value.pageSize
   }).then(res => {
+    if (requestId !== fetchRequestId) return
     // 处理照片数据，映射字段名
     photoList.value = (res.data.records || []).map(photo => ({
       ...photo,
@@ -170,6 +174,7 @@ function fetchPhotos() {
     pagination.value.total = res.data.count || 0
     loading.value = false
   }).catch(err => {
+    if (requestId !== fetchRequestId) return
     console.error('获取照片列表失败:', err)
     message.error('获取照片列表失败')
     loading.value = false
@@ -312,7 +317,8 @@ function handlePageSizeChange(pageSize) {
   fetchPhotos()
 }
 
-onMounted(() => {
+// keep-alive 缓存下每次激活都刷新列表数据（onActivated 首次挂载时也会触发）
+onActivated(() => {
   fetchAlbumInfo()
   fetchPhotos()
 })

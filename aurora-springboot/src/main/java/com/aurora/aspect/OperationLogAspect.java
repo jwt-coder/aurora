@@ -8,6 +8,7 @@ import com.aurora.util.IpUtil;
 import com.aurora.util.UserUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+@Slf4j
 @Aspect
 @Component
 public class OperationLogAspect {
@@ -38,6 +40,15 @@ public class OperationLogAspect {
     @AfterReturning(value = "operationLogPointCut()", returning = "keys")
     @SuppressWarnings("unchecked")
     public void saveOperationLog(JoinPoint joinPoint, Object keys) {
+        try {
+            doSaveOperationLog(joinPoint, keys);
+        } catch (Exception e) {
+            // 日志组装失败只记录日志，不影响业务响应
+            log.error("记录操作日志失败, method: {}", joinPoint.getSignature().toShortString(), e);
+        }
+    }
+
+    private void doSaveOperationLog(JoinPoint joinPoint, Object keys) {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = (HttpServletRequest) Objects.requireNonNull(requestAttributes).resolveReference(RequestAttributes.REFERENCE_REQUEST);
         OperationLog operationLog = new OperationLog();

@@ -39,6 +39,21 @@ public class ArticleDTO {
 
     private Integer viewCount;
 
+    /**
+     * 点赞总数
+     */
+    private Integer likeCount;
+
+    /**
+     * 当前用户/游客是否已点赞
+     */
+    private Boolean isLiked;
+
+    /**
+     * 当前登录用户是否已收藏（游客恒为 false）
+     */
+    private Boolean isCollected;
+
     private Integer type;
 
     private String originalUrl;
