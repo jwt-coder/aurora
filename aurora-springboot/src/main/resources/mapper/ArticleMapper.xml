@@ -11,6 +11,7 @@
         <result property="status" column="status"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="collectTime" column="collect_time"/>
         <result property="categoryName" column="category_name"/>
         <association property="author" javaType="com.aurora.entity.UserInfo">
             <result property="nickname" column="author_nickname"/>
@@ -56,6 +57,7 @@
         <result property="createTime" column="create_time"/>
         <result property="categoryName" column="category_name"/>
         <result property="viewsCount" column="views_count"/>
+        <result property="likeCount" column="like_count"/>
         <collection property="tagDTOs" ofType="com.aurora.model.dto.TagDTO">
             <id column="tag_id" property="id"/>
             <result column="tag_name" property="tagName"/>
@@ -66,7 +68,7 @@
                category_id,
                article_cover,
                article_title,
-               if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract) AS article_content,
+               if(a.status = 2, '', if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract)) AS article_content,
                is_top,
                is_featured,
                status,
@@ -90,15 +92,17 @@
                      status,
                      create_time,
                      update_time
-              FROM t_article) a
+              FROM t_article
+              WHERE is_delete = 0
+                and status in (1, 2)
+              order by is_top desc, is_featured desc, id desc
+              limit 3) a
                  LEFT JOIN t_article_tag at
                            ON a.id = at.article_id
                  LEFT JOIN t_tag t ON t.id = at.tag_id
                  LEFT JOIN t_category c ON a.category_id = c.id
                  LEFT JOIN t_user_info u ON a.user_id = u.id
-        where a.is_delete = 0
-          and a.status in (1, 2)
-        order by is_top desc, is_featured desc
+        order by a.is_top desc, a.is_featured desc
     </select>
     <select id="listArticles" resultMap="ArticleCardDTOResultMap">
         SELECT a.id                            AS id,
@@ -228,7 +232,7 @@
         SELECT a.id                            AS id,
                article_cover,
                article_title,
-               if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract) AS article_content,
+               if(a.status = 2, '', if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract)) AS article_content,
                is_top,
                is_featured,
                status,
@@ -268,7 +272,7 @@
         SELECT a.id                            AS id,
                article_cover,
                article_title,
-               if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract) AS article_content,
+               if(a.status = 2, '', if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract)) AS article_content,
                is_top,
                is_featured,
                status,
@@ -459,6 +463,7 @@
         a.type,
         a.create_time,
         a.visit_count AS views_count,
+        a.like_count,
         category_name,
         t.id AS tag_id,
         t.tag_name
@@ -475,6 +480,7 @@
         type,
         create_time,
         visit_count,
+        like_count,
         category_id
         FROM
         t_article
@@ -529,12 +535,13 @@
         SELECT a.id                            AS id,
                article_cover,
                article_title,
-               if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract) AS article_content,
+               if(a.status = 2, '', if(article_abstract is null or article_abstract = '', SUBSTR(article_content, 1, 500), article_abstract)) AS article_content,
                is_top,
                is_featured,
                status,
                a.create_time                   AS create_time,
                a.update_time                   AS update_time,
+               a.collect_time                  AS collect_time,
                u.nickname                      AS author_nickname,
                u.website                       AS author_website,
                u.avatar                        AS author_avatar,
@@ -564,5 +571,6 @@
                  LEFT JOIN t_category c ON a.category_id = c.id
                  LEFT JOIN t_user_info u ON a.user_id = u.id
         ORDER BY a.collect_time DESC
+        LIMIT 200
     </select>
 </mapper>

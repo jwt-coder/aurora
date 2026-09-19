@@ -57,7 +57,7 @@ import { useRouter } from 'vue-router'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Paginator from '@/components/Paginator.vue'
 import api from '@/api/api'
-import markdownToHtml from '@/utils/markdown'
+import { stripHtml } from '@/utils/markdown'
 import emitter from '@/utils/mitt'
 
 export default defineComponent({
@@ -92,10 +92,7 @@ export default defineComponent({
         .then(({ data }) => {
           data.data.records.forEach((item: any) => {
             item.articles.forEach((article: any) => {
-              article.articleContent = markdownToHtml(article.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
+              article.articleContent = stripHtml(article.articleContent)
             })
           })
           articleStore.archives = data.data.records

@@ -1,167 +1,191 @@
 <template>
   <AppPage :show-footer="true">
     <div class="home-content">
-      <!-- 统计卡片 -->
-      <n-grid x-gap="16" y-gap="16" :cols="4" class="stats-grid">
-        <n-gi>
-          <n-card class="stat-card stat-card-green">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <svg viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="currentColor" d="M96 224c35.3 0 64-28.7 64-64s-28.7-64-64-64s-64 28.7-64 64s28.7 64 64 64zm448 0c35.3 0 64-28.7 64-64s-28.7-64-64-64s-64 28.7-64 64s28.7 64 64 64zm32 32h-64c-17.6 0-33.5 7.1-45.1 18.6c40.3 22.1 68.9 62 75.1 109.4h66c17.7 0 32-14.3 32-32v-32c0-35.3-28.7-64-64-64zm-256 0c61.9 0 112-50.1 112-112S381.9 32 320 32S208 82.1 208 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C179.6 288 128 339.6 128 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zm-223.7-13.4C161.5 263.1 145.6 256 128 256H64c-35.3 0-64 28.7-64 64v32c0 17.7 14.3 32 32 32h65.9c6.3-47.4 34.9-87.3 75.2-109.4z" />
-                </svg>
+      <!-- KPI -->
+      <n-grid x-gap="14" y-gap="14" :cols="6" responsive="screen" :item-responsive="true" class="kpi-grid">
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-views">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.2a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6z"/></svg>
               </div>
-              <div class="stat-info">
-                <div class="stat-label">访问量</div>
-                <div class="stat-value">
-                  <NumberAnimation :from="0" :to="viewsCount" />
-                </div>
+              <div class="kpi-body">
+                <div class="kpi-label">访问量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="viewsCount" /></div>
+                <div class="kpi-hint">累计浏览</div>
               </div>
             </div>
           </n-card>
         </n-gi>
-
-        <n-gi>
-          <n-card class="stat-card stat-card-blue">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <svg viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="currentColor" d="M383.9 308.3l23.9-62.6c4-10.5-3.7-21.7-15-21.7h-58.5c11-18.9 17.8-40.6 17.8-64v-.3c39.2-7.8 64-19.1 64-31.7c0-13.3-27.3-25.1-70.1-33c-9.2-32.8-27-65.8-40.6-82.8c-9.5-11.9-25.9-15.6-39.5-8.8l-27.6 13.8c-9 4.5-19.6 4.5-28.6 0L182.1 3.4c-13.6-6.8-30-3.1-39.5 8.8c-13.5 17-31.4 50-40.6 82.8c-42.7 7.9-70 19.7-70 33c0 12.6 24.8 23.9 64 31.7v.3c0 23.4 6.8 45.1 17.8 64H56.3c-11.5 0-19.2 11.7-14.7 22.3l25.8 60.2C27.3 329.8 0 372.7 0 422.4v44.8C0 491.9 20.1 512 44.8 512h358.4c24.7 0 44.8-20.1 44.8-44.8v-44.8c0-48.4-25.8-90.4-64.1-114.1z" />
-                </svg>
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-users">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 11a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 16 11zm-8 0a3.5 3.5 0 1 0-3.5-3.5A3.5 3.5 0 0 0 8 11zm0 2c-2.67 0-8 1.34-8 4v2h9.5v-2c0-1.15.44-2.2 1.17-3.06A15.4 15.4 0 0 0 8 13zm8 0c-.29 0-.62.02-.97.05A5.4 5.4 0 0 1 16.5 17v2H24v-2c0-2.66-5.33-4-8-4z"/></svg>
               </div>
-              <div class="stat-info">
-                <div class="stat-label">用户量</div>
-                <div class="stat-value">
-                  <NumberAnimation :from="0" :to="userCount" />
-                </div>
+              <div class="kpi-body">
+                <div class="kpi-label">用户量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="userCount" /></div>
+                <div class="kpi-hint">注册用户</div>
               </div>
             </div>
           </n-card>
         </n-gi>
-
-        <n-gi>
-          <n-card class="stat-card stat-card-pink">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                </svg>
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-articles">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 12h8v1.5H8V12zm0 3.5h8V17H8v-1.5zm0-7h5V10H8V8.5z"/></svg>
               </div>
-              <div class="stat-info">
-                <div class="stat-label">文章量</div>
-                <div class="stat-value">
-                  <NumberAnimation :from="0" :to="articleCount" />
-                </div>
+              <div class="kpi-body">
+                <div class="kpi-label">文章量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="articleCount" /></div>
+                <div class="kpi-hint">已发布文章</div>
               </div>
             </div>
           </n-card>
         </n-gi>
-
-        <n-gi>
-          <n-card class="stat-card stat-card-purple">
-            <div class="stat-content">
-              <div class="stat-icon">
-                <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="currentColor" d="M924.3 338.4a447.57 447.57 0 0 0-96.1-143.3a443.09 443.09 0 0 0-143-96.3A443.91 443.91 0 0 0 512 64h-2c-60.5.3-119 12.3-174.1 35.9a444.08 444.08 0 0 0-141.7 96.5a445 445 0 0 0-95 142.8A449.89 449.89 0 0 0 65 514.1c.3 69.4 16.9 138.3 47.9 199.9v152c0 25.4 20.6 46 45.9 46h151.8a447.72 447.72 0 0 0 199.5 48h2.1c59.8 0 117.7-11.6 172.3-34.3A443.2 443.2 0 0 0 827 830.5c41.2-40.9 73.6-88.7 96.3-142c23.5-55.2 35.5-113.9 35.8-174.5c.2-60.9-11.6-120-34.8-175.6z" />
-                </svg>
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-messages">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2zm3 5h10v1.5H7V9zm0 3h7v1.5H7V12z"/></svg>
               </div>
-              <div class="stat-info">
-                <div class="stat-label">留言量</div>
-                <div class="stat-value">
-                  <NumberAnimation :from="0" :to="messageCount" />
-                </div>
+              <div class="kpi-body">
+                <div class="kpi-label">留言量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="messageCount" /></div>
+                <div class="kpi-hint">留言与评论</div>
+              </div>
+            </div>
+          </n-card>
+        </n-gi>
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-likes">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-label">点赞量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="likeCount" /></div>
+                <div class="kpi-hint">文章点赞</div>
+              </div>
+            </div>
+          </n-card>
+        </n-gi>
+        <n-gi span="6 m:2 l:1">
+          <n-card class="kpi-card" content-class="kpi-card-body">
+            <div class="kpi-inner">
+              <div class="kpi-icon kpi-collects">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-label">收藏量</div>
+                <div class="kpi-value"><NumberAnimation :from="0" :to="collectCount" /></div>
+                <div class="kpi-hint">用户收藏</div>
               </div>
             </div>
           </n-card>
         </n-gi>
       </n-grid>
 
-      <!-- 图表区域 -->
-      <n-grid x-gap="16" y-gap="16" :cols="2" class="charts-grid">
-        <!-- 一周访问量 -->
-        <n-gi :span="2">
-          <n-card class="chart-card" title="访问趋势">
-            <template #header-extra>
-              <n-tag type="success" size="small">近7天</n-tag>
+      <!-- 趋势 + 热门 -->
+      <n-grid x-gap="14" y-gap="14" :cols="3" responsive="screen" :item-responsive="true" class="main-grid">
+        <n-gi span="3 m:2">
+          <n-card class="panel" content-class="panel-body">
+            <template #header>
+              <div class="panel-header">
+                <span class="panel-title">访问趋势</span>
+                <n-tag size="small" round class="panel-tag">近 7 天</n-tag>
+              </div>
             </template>
-            <div id="visits_per_week" class="chart-container-350"></div>
+            <div id="visits_per_week" class="chart-box"></div>
           </n-card>
         </n-gi>
 
-        <!-- 热门文章 -->
-        <n-gi>
-          <n-card class="chart-card hot-article-card" title="热门文章">
-            <template #header-extra>
-              <n-tag type="warning" size="small" round>
-                <template #icon>
-                  <n-icon><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg></n-icon>
-                </template>
-                TOP 5
-              </n-tag>
+        <n-gi span="3 m:1">
+          <n-card class="panel" content-class="panel-body">
+            <template #header>
+              <div class="panel-header">
+                <span class="panel-title">热门文章</span>
+                <n-tag size="small" round type="warning" class="panel-tag">TOP {{ Math.max(topArticles.length, 1) }}</n-tag>
+              </div>
             </template>
-            <div class="hot-articles-list">
+            <div class="hot-list">
               <div
                 v-for="(item, index) in topArticles"
-                :key="item.id"
-                class="hot-article-item"
+                :key="item.id || index"
+                class="hot-item"
                 :class="`rank-${index + 1}`"
               >
-                <div class="article-rank-badge">
-                  <span v-if="index < 3" class="rank-icon">
-                    <svg v-if="index === 0" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    <svg v-else-if="index === 1" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                    <svg v-else viewBox="0 0 24 24"><path fill="currentColor" d="M12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28z"/></svg>
-                  </span>
-                  <span v-else class="rank-number">{{ index + 1 }}</span>
-                </div>
-                <div class="article-content">
-                  <div class="article-title">{{ item.articleTitle }}</div>
-                  <div class="article-stats">
-                    <div class="stat-item">
-                      <n-icon size="14" color="#18A058">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                      </n-icon>
-                      <span>{{ formatNumber(item.viewsCount) }}</span>
+                <div class="hot-rank" :class="`r-${index + 1}`">{{ index + 1 }}</div>
+                <div class="hot-main">
+                  <div class="hot-title" :title="item.articleTitle">{{ item.articleTitle || '—' }}</div>
+                  <div class="hot-meta">
+                    <span class="hot-stat" title="浏览">
+                      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                      {{ formatNumber(item.viewsCount) }}
+                    </span>
+                    <span class="hot-stat" title="点赞">
+                      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      {{ formatNumber(item.likeCount) }}
+                    </span>
+                    <span class="hot-stat" title="收藏">
+                      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                      {{ formatNumber(item.collectCount) }}
+                    </span>
+                    <div class="hot-bar">
+                      <div class="hot-bar-inner" :style="{ width: getProgressWidth(item.viewsCount) }"></div>
                     </div>
-                    <div class="article-progress" :style="{ width: getProgressWidth(item.viewsCount) }"></div>
                   </div>
                 </div>
               </div>
+              <div v-if="topArticles.length === 0" class="hot-empty">暂无热门文章数据</div>
             </div>
           </n-card>
         </n-gi>
+      </n-grid>
 
-        <!-- 文章分类统计 -->
-        <n-gi>
-          <n-card class="chart-card" title="文章分类">
-            <template #header-extra>
-              <n-tag type="info" size="small">{{ categoryCount }} 个分类</n-tag>
+      <!-- 分类 / 地域 / 标签 -->
+      <n-grid x-gap="14" y-gap="14" :cols="3" responsive="screen" :item-responsive="true" class="main-grid">
+        <n-gi span="3 m:1">
+          <n-card class="panel" content-class="panel-body">
+            <template #header>
+              <div class="panel-header">
+                <span class="panel-title">文章分类</span>
+                <n-tag size="small" round class="panel-tag">{{ categoryCount }} 个分类</n-tag>
+              </div>
             </template>
-            <div id="article_category" class="chart-container-350"></div>
+            <div id="article_category" class="chart-box"></div>
           </n-card>
         </n-gi>
 
-        <!-- 用户地域分布 -->
-        <n-gi>
-          <n-card class="chart-card" title="用户地域 Top 10">
-            <template #header-extra>
-              <n-radio-group v-model:value="userAreaType" size="small">
-                <n-radio-button :value="1">用户</n-radio-button>
-                <n-radio-button :value="2">游客</n-radio-button>
-              </n-radio-group>
+        <n-gi span="3 m:1">
+          <n-card class="panel" content-class="panel-body">
+            <template #header>
+              <div class="panel-header">
+                <span class="panel-title">用户地域</span>
+                <n-radio-group v-model:value="userAreaType" size="small">
+                  <n-radio-button :value="1">用户</n-radio-button>
+                  <n-radio-button :value="2">游客</n-radio-button>
+                </n-radio-group>
+              </div>
             </template>
-            <div id="user-area" class="chart-container-350"></div>
+            <div id="user-area" class="chart-box chart-box-area"></div>
           </n-card>
         </n-gi>
 
-        <!-- 文章标签 -->
-        <n-gi>
-          <n-card class="chart-card tag-card" title="文章标签">
-            <template #header-extra>
-              <n-tag type="primary" size="small">{{ tagList.length }} 个标签</n-tag>
+        <n-gi span="3 m:1">
+          <n-card class="panel" content-class="panel-body">
+            <template #header>
+              <div class="panel-header">
+                <span class="panel-title">文章标签</span>
+                <n-tag size="small" round class="panel-tag">{{ tagList.length }} 个标签</n-tag>
+              </div>
             </template>
-            <div id="article-tags" class="tag-cloud-container">
+            <div id="article-tags" class="tag-box">
               <TagCloud v-if="tagList.length > 0" :data="tagList" />
+              <div v-else class="hot-empty">暂无标签</div>
             </div>
           </n-card>
         </n-gi>
@@ -177,24 +201,27 @@ import { getHomeCardData, getUserArea } from './api'
 import AppPage from '@/components/common/AppPage.vue'
 import NumberAnimation from '@/components/common/NumberAnimation.vue'
 import TagCloud from '@/components/common/TagCloud.vue'
-import { Line, Column, Pie, Bar } from '@antv/g2plot'
+import { Line, Pie, Bar } from '@antv/g2plot'
 
 const userStore = useUserStore()
 
-// 数据
+const PRIMARY = '#e93796'
+const PALETTE = ['#e93796', '#f062b0', '#f79ad3', '#9b7bdb', '#5b8def', '#3ec6b6']
+
 const viewsCount = ref(0)
 const userCount = ref(0)
 const articleCount = ref(0)
 const messageCount = ref(0)
+const likeCount = ref(0)
+const collectCount = ref(0)
 const tagList = ref([])
 const userAreaType = ref(1)
 const categoryCount = ref(0)
-const topArticles = ref([]) // 热门文章列表
-let userAreaChart = null // 用户地域图表实例
-let visitWeekChart = null // 一周访问量图表实例
-let articleCategoryChart = null // 文章分类图表实例
+const topArticles = ref([])
+let userAreaChart = null
+let visitWeekChart = null
+let articleCategoryChart = null
 
-// 获取首页数据
 const fetchHomeData = async () => {
   try {
     const res = await getHomeCardData()
@@ -204,24 +231,22 @@ const fetchHomeData = async () => {
     userCount.value = data.userCount || 0
     articleCount.value = data.articleCount || 0
     messageCount.value = data.messageCount || 0
+    likeCount.value = data.likeCount || 0
+    collectCount.value = data.collectCount || 0
 
-    // 一周访问量
     if (data.uniqueViewDTOs && data.uniqueViewDTOs.length > 0) {
       initVisitWeek(data.uniqueViewDTOs)
     }
 
-    // 文章浏览量排行
     if (data.articleRankDTOs && data.articleRankDTOs.length > 0) {
       initArticleVisits(data.articleRankDTOs)
     }
 
-    // 文章分类统计
     if (data.categoryDTOs && data.categoryDTOs.length > 0) {
       categoryCount.value = data.categoryDTOs.length
       initArticleCategory(data.categoryDTOs)
     }
 
-    // 文章标签
     if (data.tagDTOs && data.tagDTOs.length > 0) {
       tagList.value = data.tagDTOs.map(tag => ({
         name: tag.tagName,
@@ -234,11 +259,9 @@ const fetchHomeData = async () => {
   }
 }
 
-// 获取用户地域分布
 const fetchUserArea = async () => {
   try {
     const res = await getUserArea({ type: userAreaType.value })
-
     if (res && res.data && res.data.length > 0) {
       initUserArea(res.data)
     }
@@ -247,164 +270,111 @@ const fetchUserArea = async () => {
   }
 }
 
-// 初始化一周访问量图表
 const initVisitWeek = (data) => {
   const container = document.getElementById('visits_per_week')
   if (!container) return
+  if (visitWeekChart) visitWeekChart.destroy()
 
-  // 销毁旧实例
-  if (visitWeekChart) {
-    visitWeekChart.destroy()
-  }
-
-  const line = new Line(container, {
+  visitWeekChart = new Line(container, {
     data,
     xField: 'day',
     yField: 'viewsCount',
     smooth: true,
-    color: ['#18A058'],
+    color: [PRIMARY],
     area: {
       style: {
-        fill: 'l(270) 0:#ffffff 0.5:#18A058 1:#18A058',
-        fillOpacity: 0.2
+        fill: `l(270) 0:#ffffff 0.45:${PRIMARY} 1:${PRIMARY}`,
+        fillOpacity: 0.16
       }
     },
-    lineStyle: {
-      lineWidth: 3
-    },
+    lineStyle: { lineWidth: 2.5 },
     point: {
-      size: 4,
-      style: {
-        fill: '#fff',
-        stroke: '#18A058',
-        lineWidth: 2
-      }
+      size: 3.5,
+      style: { fill: '#fff', stroke: PRIMARY, lineWidth: 2 }
     },
     xAxis: {
-      label: {
-        style: {
-          fill: '#666'
-        }
-      },
-      line: {
-        style: {
-          stroke: '#e8e8e8'
-        }
-      }
+      label: { style: { fill: '#8b8f9a', fontSize: 11 } },
+      line: { style: { stroke: '#ececf2' } },
+      tickLine: null
     },
     yAxis: {
-      label: {
-        style: {
-          fill: '#666'
-        }
-      },
+      label: { style: { fill: '#8b8f9a', fontSize: 11 } },
       grid: {
-        line: {
-          style: {
-            stroke: '#e8e8e8',
-            lineDash: [4, 4]
-          }
-        }
+        line: { style: { stroke: '#f0f1f6', lineDash: [4, 4] } }
       }
-    }
+    },
+    tooltip: {
+      showCrosshairs: true,
+      shared: true
+    },
+    animation: true,
+    padding: [16, 12, 24, 12]
   })
-  visitWeekChart = line
-  line.render()
+  visitWeekChart.render()
 }
 
-// 初始化文章浏览量排行
 const initArticleVisits = (data) => {
-  // 只取前5条
-  topArticles.value = data.slice(0, 5).map(item => ({
+  topArticles.value = data.slice(0, 5).map((item, index) => ({
     ...item,
-    id: item.id || Math.random()
+    id: item.id || `rank-${index}`
   }))
 }
 
-// 初始化文章分类统计
 const initArticleCategory = (data) => {
   const container = document.getElementById('article_category')
   if (!container) return
+  if (articleCategoryChart) articleCategoryChart.destroy()
 
-  // 销毁旧实例
-  if (articleCategoryChart) {
-    articleCategoryChart.destroy()
-  }
-
-  const pie = new Pie(container, {
+  articleCategoryChart = new Pie(container, {
     data,
     angleField: 'articleCount',
     colorField: 'categoryName',
-    radius: 0.85,
-    innerRadius: 0.5,
-    color: ['#18A058', '#2080F0', '#F0A020', '#D03050', '#722ED1', '#13C2C2'],
+    radius: 0.82,
+    innerRadius: 0.62,
+    color: PALETTE,
     label: {
       type: 'inner',
-      offset: '-50%',
+      offset: '-40%',
       content: '{value}',
-      style: {
-        textAlign: 'center',
-        fontSize: 14,
-        fill: '#fff'
-      }
+      style: { textAlign: 'center', fontSize: 12, fill: '#fff' }
     },
     statistic: {
       title: {
-        offsetY: -8,
+        offsetY: -6,
         content: '文章总数',
-        style: {
-          fontSize: '14px',
-          color: '#666'
-        }
+        style: { fontSize: '12px', color: '#8b8f9a' }
       },
       content: {
-        offsetY: 4,
-        style: {
-          fontSize: '20px',
-          color: '#333',
-          fontWeight: 'bold'
-        }
+        offsetY: 6,
+        style: { fontSize: '22px', color: '#2c2f38', fontWeight: '700' }
       }
     },
     legend: {
       position: 'bottom',
-      layout: {
-        justifyContent: 'center',
-        alignItems: 'center'
-      }
-    }
+      layout: { justifyContent: 'center', alignItems: 'center' },
+      itemName: { style: { fill: '#5c6070', fontSize: 12 } }
+    },
+    interactions: [{ type: 'element-active' }],
+    animation: true
   })
-  articleCategoryChart = pie
-  pie.render()
+  articleCategoryChart.render()
 }
 
-// 初始化用户地域分布 - 热力柱状图
 const initUserArea = (data) => {
   const container = document.getElementById('user-area')
   if (!container) return
+  if (userAreaChart) userAreaChart.destroy()
 
-  // 销毁旧实例
-  if (userAreaChart) {
-    userAreaChart.destroy()
-  }
-
-  // 转换数据格式，取 Top 10
   const chartData = data
-    .map(item => {
-      const name = item.name || item.provinceName || item.areaName || item.regionName || '未知'
-      const value = item.value || item.count || item.userCount || 0
-      return { name, value }
-    })
+    .map(item => ({
+      name: item.name || item.provinceName || item.areaName || item.regionName || '未知',
+      value: item.value || item.count || item.userCount || 0
+    }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 10)
 
-  if (chartData.length === 0) {
-    console.warn('没有有效的地域数据')
-    return
-  }
-
-  // 计算最大值用于颜色映射
-  const maxValue = Math.max(...chartData.map(item => item.value))
+  if (chartData.length === 0) return
+  const maxValue = Math.max(...chartData.map(item => item.value), 1)
 
   userAreaChart = new Bar(container, {
     data: chartData,
@@ -412,91 +382,64 @@ const initUserArea = (data) => {
     yField: 'name',
     seriesField: 'value',
     color: ({ value }) => {
-      // 根据值的大小返回不同深度的蓝色
       const ratio = value / maxValue
-      if (ratio > 0.8) return '#0050b3'
-      if (ratio > 0.6) return '#1890ff'
-      if (ratio > 0.4) return '#40a9ff'
-      if (ratio > 0.2) return '#69c0ff'
-      return '#91d5ff'
+      if (ratio > 0.75) return '#c2185b'
+      if (ratio > 0.5) return PRIMARY
+      if (ratio > 0.3) return '#f062b0'
+      if (ratio > 0.15) return '#f79ad3'
+      return '#fbc6e3'
     },
     legend: false,
-    barStyle: {
-      radius: [0, 4, 4, 0]
-    },
+    barStyle: { radius: [0, 4, 4, 0] },
     tooltip: {
-      formatter: (datum) => {
-        return { name: datum.name, value: datum.value + ' 人' }
-      }
+      formatter: datum => ({ name: datum.name, value: datum.value + ' 人' })
     },
     label: {
       position: 'right',
-      style: {
-        fill: '#666',
-        fontSize: 12
-      },
+      style: { fill: '#8b8f9a', fontSize: 11 },
       formatter: ({ value }) => value
     },
     xAxis: {
-      label: {
-        style: {
-          fill: '#999'
-        }
-      },
-      grid: {
-        line: {
-          style: {
-            stroke: '#f0f0f0'
-          }
-        }
-      }
+      label: { style: { fill: '#8b8f9a', fontSize: 11 } },
+      grid: { line: { style: { stroke: '#f0f1f6' } } }
     },
     yAxis: {
-      label: {
-        style: {
-          fill: '#666'
-        }
-      }
+      label: { style: { fill: '#5c6070', fontSize: 12 } }
     },
     responsive: true,
-    appendPadding: [10, 20, 0, 0]
+    appendPadding: [8, 28, 0, 4],
+    animation: true
   })
-
   userAreaChart.render()
 }
 
-// 格式化数字显示
 const formatNumber = (num) => {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + 'w'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
-  }
-  return num.toString()
+  if (num >= 10000) return (num / 10000).toFixed(1) + 'w'
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
+  return String(num || 0)
 }
 
-// 计算进度条宽度（基于最大浏览量）
 const getProgressWidth = (views) => {
   if (!topArticles.value || topArticles.value.length === 0) return '0%'
   const maxViews = Math.max(...topArticles.value.map(item => item.viewsCount || 0))
   if (maxViews === 0) return '0%'
-  return Math.max((views / maxViews) * 100, 15) + '%'
+  return Math.max((views / maxViews) * 100, 8) + '%'
 }
 
-// 监听用户类型变化
 watch(userAreaType, () => {
   fetchUserArea()
 })
 
+const handleResize = () => {
+  if (userAreaChart) userAreaChart.changeSize()
+}
+
 onMounted(() => {
   fetchHomeData()
   fetchUserArea()
-
-  // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
 })
 
-// 组件卸载时清理
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
   if (visitWeekChart) {
@@ -512,55 +455,72 @@ onBeforeUnmount(() => {
     userAreaChart = null
   }
 })
-
-// 处理窗口大小变化
-const handleResize = () => {
-  if (userAreaChart) {
-    userAreaChart.changeSize()
-  }
-}
 </script>
 
 <style scoped>
 .home-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 0;
 }
 
-.stats-grid {
-  margin-bottom: 16px;
+.kpi-grid,
+.main-grid {
+  margin: 0 !important;
 }
 
-.charts-grid {
-  margin-top: 16px;
-}
-
-/* 统计卡片样式 */
-.stat-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+.panel,
+.kpi-card {
+  border-radius: 14px;
+  border: 1px solid #eceef5;
+  box-shadow: 0 1px 2px rgba(30, 34, 48, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
   overflow: hidden;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+.panel:hover,
+.kpi-card:hover {
+  box-shadow: 0 8px 24px rgba(233, 55, 150, 0.08);
 }
 
-.stat-card :deep(.n-card__content) {
-  padding: 20px;
+.panel-body {
+  padding: 12px 14px 14px !important;
 }
 
-.stat-content {
+.kpi-card-body {
+  padding: 16px 18px !important;
+}
+
+.panel-header {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
 }
 
-.stat-icon {
-  width: 56px;
-  height: 56px;
+.panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c2f38;
+}
+
+.panel-tag {
+  background: #fff0f7 !important;
+  color: #c2185b !important;
+  border: none !important;
+}
+
+.kpi-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -568,361 +528,266 @@ const handleResize = () => {
   flex-shrink: 0;
 }
 
-.stat-icon svg {
-  width: 28px;
-  height: 28px;
-  fill: white;
+.kpi-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
-.stat-card-green .stat-icon {
-  background: linear-gradient(135deg, #52C41A 0%, #73D13D 100%);
+.kpi-views {
+  background: linear-gradient(135deg, #e93796 0%, #f062b0 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(233, 55, 150, 0.28);
 }
 
-.stat-card-blue .stat-icon {
-  background: linear-gradient(135deg, #1890FF 0%, #40A9FF 100%);
+.kpi-users {
+  background: linear-gradient(135deg, #5b8def 0%, #7aa8ff 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(91, 141, 239, 0.25);
 }
 
-.stat-card-pink .stat-icon {
-  background: linear-gradient(135deg, #EB2F96 0%, #F759AB 100%);
+.kpi-articles {
+  background: linear-gradient(135deg, #3ec6b6 0%, #5ed4c6 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(62, 198, 182, 0.25);
 }
 
-.stat-card-purple .stat-icon {
-  background: linear-gradient(135deg, #722ED1 0%, #9254DE 100%);
+.kpi-messages {
+  background: linear-gradient(135deg, #9b7bdb 0%, #b39be8 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(155, 123, 219, 0.25);
 }
 
-.stat-info {
-  flex: 1;
+.kpi-likes {
+  background: linear-gradient(135deg, #f25c54 0%, #ff7b72 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(242, 92, 84, 0.25);
+}
+
+.kpi-collects {
+  background: linear-gradient(135deg, #f0a020 0%, #f5c15a 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(240, 160, 32, 0.25);
+}
+
+.kpi-body {
   min-width: 0;
+  flex: 1;
 }
 
-.stat-label {
+.kpi-label {
   font-size: 13px;
-  color: #666;
-  margin-bottom: 8px;
+  color: #8b8f9a;
+  margin-bottom: 4px;
 }
 
-.stat-value {
+.kpi-value {
   font-size: 28px;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 6px;
-  line-height: 1;
+  color: #1f2230;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
-.stat-trend {
+.kpi-hint {
+  margin-top: 4px;
   font-size: 12px;
-  color: #52C41A;
-  font-weight: 500;
+  color: #b0b4c0;
 }
 
-.trend-text {
-  color: #999;
-  font-weight: 400;
-  margin-left: 4px;
-}
-
-/* 图表卡片样式 */
-.chart-card {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-}
-
-.chart-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.chart-card :deep(.n-card__header) {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.chart-card :deep(.n-card__content) {
-  padding: 20px;
-}
-
-.chart-container {
+.chart-box {
   height: 280px;
   width: 100%;
 }
 
-.chart-container-350 {
-  height: 350px;
-  width: 100%;
+.chart-box-area {
+  height: 280px;
 }
 
 #user-area {
-  min-height: 350px !important;
+  min-height: 280px !important;
+  height: 280px !important;
   width: 100% !important;
-  height: 350px !important;
 }
 
-/* 确保地图容器有正确的样式 */
 #user-area canvas {
   width: 100% !important;
   height: 100% !important;
 }
 
-.tag-cloud-container {
-  height: 350px;
+.tag-box {
+  height: 280px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;
 }
 
 #article-tags {
-  height: 350px !important;
+  height: 280px !important;
 }
 
-/* 热门文章卡片特殊样式 */
-.hot-article-card {
-  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-}
-
-/* 热门文章列表样式 */
-.hot-articles-list {
+.hot-list {
+  height: 280px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 350px;
-  overflow-y: auto;
-  padding-right: 6px;
+  gap: 8px;
+  padding-right: 4px;
 }
 
-/* 自定义滚动条 */
-.hot-articles-list::-webkit-scrollbar {
+.hot-list::-webkit-scrollbar {
   width: 4px;
 }
 
-.hot-articles-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.hot-list::-webkit-scrollbar-thumb {
+  background: #f0c1dd;
   border-radius: 4px;
 }
 
-.hot-articles-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.hot-articles-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-.hot-article-item {
+.hot-item {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fafbfd;
+  border: 1px solid #f0f2f7;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.hot-article-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #e0e0e0;
-  transition: all 0.3s ease;
+.hot-item:hover {
+  border-color: #f7c4de;
+  background: #fff7fb;
 }
 
-.hot-article-item:hover {
-  border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.hot-article-item:hover::before {
-  background: #1890ff;
-}
-
-/* 不同排名的左侧边框颜色 */
-.hot-article-item.rank-1::before {
-  background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-}
-
-.hot-article-item.rank-2::before {
-  background: linear-gradient(180deg, #C0C0C0 0%, #A8A8A8 100%);
-}
-
-.hot-article-item.rank-3::before {
-  background: linear-gradient(180deg, #CD7F32 0%, #B87332 100%);
-}
-
-/* 排名徽章 */
-.article-rank-badge {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.rank-icon {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rank-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.rank-1 .rank-icon {
-  color: #FFD700;
-  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
-}
-
-.rank-2 .rank-icon {
-  color: #C0C0C0;
-  filter: drop-shadow(0 2px 4px rgba(192, 192, 192, 0.3));
-}
-
-.rank-3 .rank-icon {
-  color: #CD7F32;
-  filter: drop-shadow(0 2px 4px rgba(205, 127, 50, 0.3));
-}
-
-.rank-number {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: #f5f5f5;
-  color: #999;
-  font-size: 14px;
+.hot-rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: #eef0f5;
+  color: #8b8f9a;
 }
 
-/* 文章内容 */
-.article-content {
+.hot-rank.r-1 {
+  background: #ffe4f0;
+  color: #c2185b;
+}
+
+.hot-rank.r-2 {
+  background: #f3e8ff;
+  color: #7a4fc0;
+}
+
+.hot-rank.r-3 {
+  background: #e8f3ff;
+  color: #3d7dd8;
+}
+
+.hot-main {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.article-title {
-  font-size: 14px;
+.hot-title {
+  font-size: 13px;
   font-weight: 500;
-  color: #333;
+  color: #2c2f38;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.4;
 }
 
-.hot-article-item.rank-1 .article-title {
+.hot-item.rank-1 .hot-title {
+  color: #c2185b;
   font-weight: 600;
-  color: #1890ff;
 }
 
-.article-stats {
+.hot-meta {
+  margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  position: relative;
+  gap: 8px;
 }
 
-.stat-item {
-  display: flex;
+.hot-views {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #666;
-  font-weight: 500;
-  z-index: 1;
-  background: white;
-  padding: 2px 6px;
-  border-radius: 4px;
+  color: #8b8f9a;
+  flex-shrink: 0;
 }
 
-.article-progress {
-  position: absolute;
-  left: 0;
-  right: 0;
+.hot-views svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hot-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #8b8f9a;
+  flex-shrink: 0;
+}
+
+.hot-stat svg {
+  width: 13px;
+  height: 13px;
+}
+
+.hot-bar {
+  flex: 1;
   height: 4px;
-  background: linear-gradient(90deg, #1890ff 0%, #40A9FF 100%);
-  border-radius: 2px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.15;
-  top: 50%;
-  transform: translateY(-50%);
+  border-radius: 999px;
+  background: #f0f2f7;
+  overflow: hidden;
 }
 
-.hot-article-item.rank-1 .article-progress {
-  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
-  opacity: 0.25;
+.hot-bar-inner {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f79ad3 0%, #e93796 100%);
+  transition: width 0.5s ease;
 }
 
-.hot-article-item.rank-2 .article-progress {
-  background: linear-gradient(90deg, #C0C0C0 0%, #A8A8A8 100%);
-  opacity: 0.2;
+.hot-item.rank-1 .hot-bar-inner {
+  background: linear-gradient(90deg, #f79ad3 0%, #c2185b 100%);
 }
 
-.hot-article-item.rank-3 .article-progress {
-  background: linear-gradient(90deg, #CD7F32 0%, #B87332 100%);
-  opacity: 0.2;
+.hot-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b4c0;
+  font-size: 13px;
 }
 
-/* 响应式 */
-@media (max-width: 1400px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .charts-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .chart-container {
-    height: 240px;
-  }
-
-  .chart-container-350 {
-    height: 280px;
-  }
-
-  .hot-articles-list {
-    height: 280px;
-  }
-
-  .tag-cloud-container {
-    height: 280px;
-  }
-
-  #user-area {
-    height: 280px !important;
-  }
-
+@media (max-width: 960px) {
+  .chart-box,
+  .chart-box-area,
+  .hot-list,
+  .tag-box,
+  #user-area,
   #article-tags {
-    height: 280px !important;
+    height: 240px !important;
+    min-height: 240px !important;
   }
 
-  .stat-value {
-    font-size: 24px;
+  .kpi-value {
+    font-size: 22px;
   }
 }
 </style>

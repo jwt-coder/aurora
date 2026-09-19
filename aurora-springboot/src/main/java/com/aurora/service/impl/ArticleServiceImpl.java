@@ -38,6 +38,8 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -82,6 +84,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private RedisService redisService;
 
     @Autowired
+    @Qualifier("taskExecutor")
+    private TaskExecutor taskExecutor;
+
+    @Autowired
     private RabbitTemplate rabbitTemplate;
 
     @Autowired
@@ -100,10 +106,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public TopAndFeaturedArticlesDTO listTopAndFeaturedArticles() {
         List<ArticleCardDTO> articleCardDTOs = articleMapper.listTopAndFeaturedArticles();
+        blankPrivateArticleContent(articleCardDTOs);
         if (articleCardDTOs.isEmpty()) {
             return new TopAndFeaturedArticlesDTO();
         } else if (articleCardDTOs.size() > 3) {
-            articleCardDTOs = articleCardDTOs.subList(0, 3);
+            articleCardDTOs = new ArrayList<>(articleCardDTOs.subList(0, 3));
         }
         TopAndFeaturedArticlesDTO topAndFeaturedArticlesDTO = new TopAndFeaturedArticlesDTO();
         topAndFeaturedArticlesDTO.setTopArticle(articleCardDTOs.get(0));
@@ -122,11 +129,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         List<ArticleCardDTO> articles = articleMapper.listArticles(PageUtil.getLimitCurrent(), PageUtil.getSize());
 
         // 对加密文章进行内容过滤
-        articles.forEach(article -> {
-            if (article.getStatus() != null && article.getStatus().equals(2)) {
-                article.setArticleContent("");
-            }
-        });
+        blankPrivateArticleContent(articles);
 
         return new PageResultDTO<>(articles, count);
     }
@@ -143,11 +146,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         List<ArticleCardDTO> articles = articleMapper.getArticlesByCategoryId(PageUtil.getLimitCurrent(), PageUtil.getSize(), categoryId);
 
         // 对加密文章进行内容过滤
-        articles.forEach(article -> {
-            if (article.getStatus() != null && article.getStatus().equals(2)) {
-                article.setArticleContent("");
-            }
-        });
+        blankPrivateArticleContent(articles);
 
         return new PageResultDTO<>(articles, count);
     }
@@ -155,7 +154,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @SneakyThrows
     @Override
     public ArticleDTO getArticleById(Integer articleId, HttpServletRequest request) {
-        Article articleForCheck = articleMapper.selectOne(new LambdaQueryWrapper<Article>().eq(Article::getId, articleId));
+        // 只取 id/status，避免校验阶段把 article_content 整段查出来
+        Article articleForCheck = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getId, articleId)
+                .select(Article::getId, Article::getStatus));
         if (Objects.isNull(articleForCheck)) {
             return null;
         }
@@ -170,10 +172,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 throw new BizException(ARTICLE_ACCESS_FAIL);
             }
         }
-        // 访问量直接落库（原子自增），数据库为唯一事实源，避免仅存 Redis 重启丢失
-        articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+        // 访问量异步落库，不阻塞文章详情响应
+        taskExecutor.execute(() -> articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                 .eq(Article::getId, articleId)
-                .setSql("visit_count = IFNULL(visit_count, 0) + 1"));
+                .setSql("visit_count = IFNULL(visit_count, 0) + 1")));
         ArticleDTO article = articleMapper.getArticleById(articleId);
         if (Objects.isNull(article)) {
             return null;
@@ -186,6 +188,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (Objects.isNull(nextArticle)) {
             nextArticle = articleMapper.getFirstArticle();
         }
+        // 上下篇卡片不得泄漏私密文章摘要
+        blankPrivateArticleContent(preArticle);
+        blankPrivateArticleContent(nextArticle);
         article.setPreArticleCard(preArticle);
         article.setNextArticleCard(nextArticle);
 
@@ -213,7 +218,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (Objects.isNull(article)) {
             throw new BizException("文章不存在");
         }
-        if (article.getPassword().equals(articlePasswordVO.getArticlePassword())) {
+        if (article.getPassword() != null && article.getPassword().equals(articlePasswordVO.getArticlePassword())) {
             redisService.sAdd(ARTICLE_ACCESS + UserUtil.getUserDetailsDTO().getId(), articlePasswordVO.getArticleId());
         } else {
             throw new BizException("密码错误");
@@ -231,11 +236,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         List<ArticleCardDTO> articles = articleMapper.listArticlesByTagId(PageUtil.getLimitCurrent(), PageUtil.getSize(), tagId);
 
         // 对加密文章进行内容过滤
-        articles.forEach(article -> {
-            if (article.getStatus() != null && article.getStatus().equals(2)) {
-                article.setArticleContent("");
-            }
-        });
+        blankPrivateArticleContent(articles);
 
         return new PageResultDTO<>(articles, count);
     }
@@ -249,6 +250,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .in(Article::getStatus, 1, 2);
         Integer count = articleMapper.selectCount(queryWrapper);
         List<ArticleCardDTO> articles = articleMapper.listArchives(PageUtil.getLimitCurrent(), PageUtil.getSize());
+        blankPrivateArticleContent(articles);
         HashMap<String, List<ArticleCardDTO>> map = new HashMap<>();
         for (ArticleCardDTO article : articles) {
             LocalDateTime createTime = article.getCreateTime();
@@ -421,34 +423,40 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public ArticleLikeDTO likeArticle(Integer articleId, HttpServletRequest request) {
+        // 只取 id/like_count，避免把 article_content 整段从库里拖出来
         Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
                 .eq(Article::getId, articleId)
-                .eq(Article::getIsDelete, 0));
+                .eq(Article::getIsDelete, 0)
+                .select(Article::getId, Article::getLikeCount));
         if (Objects.isNull(article)) {
             throw new BizException("文章不存在");
         }
         String likeUserKey = getLikeUserKey(request);
-        // 以 Set 操作的返回值判断本次是否产生变更，避免并发双击导致计数与去重集合漂移
-        boolean changed;
+        // 以 Set 操作的返回值判断变更与终态，避免并发双击导致计数漂移，也少一次 Redis 往返
+        boolean liked;
         if (Boolean.TRUE.equals(redisService.sIsMember(likeUserKey, articleId))) {
             Long removed = redisService.sRemove(likeUserKey, articleId);
-            changed = Objects.nonNull(removed) && removed > 0;
-            if (changed) {
+            liked = Objects.isNull(removed) || removed == 0;
+            if (Objects.nonNull(removed) && removed > 0) {
                 articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                         .eq(Article::getId, articleId)
                         .setSql("like_count = GREATEST(IFNULL(like_count, 1) - 1, 0)"));
             }
         } else {
             Long added = redisService.sAdd(likeUserKey, articleId);
-            changed = Objects.nonNull(added) && added > 0;
-            if (changed) {
+            liked = Objects.nonNull(added) && added > 0;
+            if (liked) {
                 articleMapper.update(null, new LambdaUpdateWrapper<Article>()
                         .eq(Article::getId, articleId)
                         .setSql("like_count = IFNULL(like_count, 0) + 1"));
             }
         }
-        boolean liked = Boolean.TRUE.equals(redisService.sIsMember(likeUserKey, articleId));
-        Integer likeCount = articleMapper.selectById(articleId).getLikeCount();
+        Article latest = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getId, articleId)
+                .select(Article::getLikeCount));
+        Integer likeCount = Objects.nonNull(latest) && Objects.nonNull(latest.getLikeCount())
+                ? latest.getLikeCount()
+                : article.getLikeCount();
         return ArticleLikeDTO.builder().likeCount(likeCount).isLiked(liked).build();
     }
 
@@ -460,7 +468,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         if (Objects.isNull(articleMapper.selectOne(new LambdaQueryWrapper<Article>()
                 .eq(Article::getId, articleId)
-                .eq(Article::getIsDelete, 0)))) {
+                .eq(Article::getIsDelete, 0)
+                .select(Article::getId)))) {
             throw new BizException("文章不存在");
         }
         UserCollect collect = userCollectMapper.selectOne(new LambdaQueryWrapper<UserCollect>()
@@ -489,7 +498,23 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (Objects.isNull(userId)) {
             throw new BizException("请登录后查看收藏");
         }
-        return articleMapper.listCollectedArticles(userId);
+        List<ArticleCardDTO> articles = articleMapper.listCollectedArticles(userId);
+        blankPrivateArticleContent(articles);
+        return articles;
+    }
+
+    /** 私密文章卡片不返回摘要正文 */
+    private void blankPrivateArticleContent(List<ArticleCardDTO> articles) {
+        if (CollectionUtils.isEmpty(articles)) {
+            return;
+        }
+        articles.forEach(this::blankPrivateArticleContent);
+    }
+
+    private void blankPrivateArticleContent(ArticleCardDTO article) {
+        if (article != null && article.getStatus() != null && article.getStatus().equals(2)) {
+            article.setArticleContent("");
+        }
     }
 
     /**

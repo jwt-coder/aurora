@@ -37,19 +37,23 @@ public class MySqlSearchStrategyImpl implements SearchStrategy {
                 .last("limit 50"));
 
         return articles.stream().map(item -> {
-            String articleTitle = item.getArticleTitle();
+            // 先转义再高亮，避免标题中的 HTML 经搜索接口 v-html 执行
+            String escapedTitle = org.springframework.web.util.HtmlUtils.htmlEscape(
+                    item.getArticleTitle() == null ? "" : item.getArticleTitle());
+            String escapedKeywords = org.springframework.web.util.HtmlUtils.htmlEscape(keywords);
+            String articleTitle = escapedTitle;
             boolean isLowerCase = true;
-            int titleIndex = articleTitle.indexOf(keywords.toLowerCase());
+            int titleIndex = articleTitle.indexOf(escapedKeywords.toLowerCase());
             if (titleIndex == -1) {
-                titleIndex = articleTitle.indexOf(keywords.toUpperCase());
+                titleIndex = articleTitle.indexOf(escapedKeywords.toUpperCase());
                 if (titleIndex != -1) {
                     isLowerCase = false;
                 }
             }
             if (isLowerCase) {
-                articleTitle = articleTitle.replace(keywords.toLowerCase(), PRE_TAG + keywords.toLowerCase() + POST_TAG);
+                articleTitle = articleTitle.replace(escapedKeywords.toLowerCase(), PRE_TAG + escapedKeywords.toLowerCase() + POST_TAG);
             } else {
-                articleTitle = articleTitle.replace(keywords.toUpperCase(), PRE_TAG + keywords.toUpperCase() + POST_TAG);
+                articleTitle = articleTitle.replace(escapedKeywords.toUpperCase(), PRE_TAG + escapedKeywords.toUpperCase() + POST_TAG);
             }
             return ArticleSearchDTO.builder()
                     .id(item.getId())

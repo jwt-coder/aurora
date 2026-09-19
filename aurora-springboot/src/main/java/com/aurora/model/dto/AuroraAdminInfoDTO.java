@@ -21,6 +21,16 @@ public class AuroraAdminInfoDTO {
 
     private Integer articleCount;
 
+    /**
+     * 全站点赞总数
+     */
+    private Integer likeCount;
+
+    /**
+     * 全站收藏总数
+     */
+    private Integer collectCount;
+
     private List<CategoryDTO> categoryDTOs;
 
     private List<TagDTO> tagDTOs;

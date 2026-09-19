@@ -40,7 +40,7 @@ import { ArticleCard } from '@/components/ArticleCard'
 import Paginator from '@/components/Paginator.vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/api'
-import markdownToHtml from '@/utils/markdown'
+import { stripHtml } from '@/utils/markdown'
 
 export default defineComponent({
   name: 'ArticleList',
@@ -75,10 +75,7 @@ export default defineComponent({
         .then(({ data }) => {
           if (data.flag && data.data) {
             data.data.records.forEach((item: any) => {
-              item.articleContent = markdownToHtml(item.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
+              item.articleContent = stripHtml(item.articleContent)
             })
             reactiveData.articles = data.data.records
             pagination.total = data.data.count

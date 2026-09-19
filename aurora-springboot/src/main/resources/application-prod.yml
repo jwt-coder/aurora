@@ -7,9 +7,10 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/aurora?serverTimezone=Asia/Shanghai&allowMultiQueries=true
-    username: root
-    password: 127.0.0.1
+    # 禁止 allowMultiQueries，降低拼接 SQL 注入面
+    url: jdbc:mysql://127.0.0.1:3306/aurora?serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:127.0.0.1}
     hikari:
       minimum-idle: 10
       idle-timeout: 300000
@@ -54,7 +55,7 @@ spring:
 
   elasticsearch:
     rest:
-      uris: es的ip:9200
+      uris: ${ES_URIS:es的ip:9200}
 
   mail:
     host: smtp.163.com
@@ -84,13 +85,14 @@ spring:
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
   configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 生产关闭 SQL 全量打印，StdOutImpl 会把 article_content 等大字段刷进 stdout
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     map-underscore-to-camel-case: true
 
 logging:
   level:
     root: info
-    com.aurora.mapper: debug
+    com.aurora.mapper: info
     com.aurora: info
     org.springframework.amqp: warn
     org.springframework.security: warn

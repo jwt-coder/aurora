@@ -40,4 +40,9 @@ public class ArticleCardDTO {
 
     private LocalDateTime updateTime;
 
+    /**
+     * 收藏时间（仅「我的收藏」列表返回）
+     */
+    private LocalDateTime collectTime;
+
 }

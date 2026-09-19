@@ -35,7 +35,7 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
     @Override
     public SystemConfigDTO getSystemConfig() {
         Map<String, String> configMap = getConfigMap();
-        
+
         return SystemConfigDTO.builder()
                 .websiteUrl(configMap.get("website.url"))
                 .websiteName(configMap.get("website.name"))
@@ -46,17 +46,34 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
                 .uploadMode(configMap.get("upload.mode"))
                 .uploadOssUrl(configMap.get("upload.oss.url"))
                 .uploadOssEndpoint(configMap.get("upload.oss.endpoint"))
-                .uploadOssAccessKeyId(configMap.get("upload.oss.accessKeyId"))
-                .uploadOssAccessKeySecret(configMap.get("upload.oss.accessKeySecret"))
+                .uploadOssAccessKeyId(maskSecret(configMap.get("upload.oss.accessKeyId")))
+                .uploadOssAccessKeySecret(maskSecret(configMap.get("upload.oss.accessKeySecret")))
                 .uploadOssBucketName(configMap.get("upload.oss.bucketName"))
                 .uploadMinioUrl(configMap.get("upload.minio.url"))
                 .uploadMinioEndpoint(configMap.get("upload.minio.endpoint"))
-                .uploadMinioAccesskey(configMap.get("upload.minio.accesskey"))
-                .uploadMinioSecretKey(configMap.get("upload.minio.secretKey"))
+                .uploadMinioAccesskey(maskSecret(configMap.get("upload.minio.accesskey")))
+                .uploadMinioSecretKey(maskSecret(configMap.get("upload.minio.secretKey")))
                 .uploadMinioBucketName(configMap.get("upload.minio.bucketName"))
                 .uploadLocalPath(configMap.get("upload.local.path"))
                 .loginBackgroundImage(configMap.get("login.backgroundImage"))
                 .build();
+    }
+
+    private static final String SECRET_MASK = "****";
+
+    /** 密钥类配置对外只展示掩码，避免接口回显完整凭据 */
+    private String maskSecret(String secret) {
+        if (secret == null || secret.isEmpty()) {
+            return secret;
+        }
+        if (secret.length() <= 4 || secret.contains(SECRET_MASK)) {
+            return SECRET_MASK;
+        }
+        return secret.substring(0, 2) + SECRET_MASK + secret.substring(secret.length() - 2);
+    }
+
+    private boolean isMaskedSecret(String value) {
+        return value != null && value.contains(SECRET_MASK);
     }
 
     @Override
@@ -73,13 +90,14 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
         putIfNotNull(configMap, "upload.mode", systemConfigVO.getUploadMode());
         putIfNotNull(configMap, "upload.oss.url", systemConfigVO.getUploadOssUrl());
         putIfNotNull(configMap, "upload.oss.endpoint", systemConfigVO.getUploadOssEndpoint());
-        putIfNotNull(configMap, "upload.oss.accessKeyId", systemConfigVO.getUploadOssAccessKeyId());
-        putIfNotNull(configMap, "upload.oss.accessKeySecret", systemConfigVO.getUploadOssAccessKeySecret());
+        // 掩码占位表示「未修改」，不要写回库覆盖真实密钥
+        putIfNotMasked(configMap, "upload.oss.accessKeyId", systemConfigVO.getUploadOssAccessKeyId());
+        putIfNotMasked(configMap, "upload.oss.accessKeySecret", systemConfigVO.getUploadOssAccessKeySecret());
         putIfNotNull(configMap, "upload.oss.bucketName", systemConfigVO.getUploadOssBucketName());
         putIfNotNull(configMap, "upload.minio.url", systemConfigVO.getUploadMinioUrl());
         putIfNotNull(configMap, "upload.minio.endpoint", systemConfigVO.getUploadMinioEndpoint());
-        putIfNotNull(configMap, "upload.minio.accesskey", systemConfigVO.getUploadMinioAccesskey());
-        putIfNotNull(configMap, "upload.minio.secretKey", systemConfigVO.getUploadMinioSecretKey());
+        putIfNotMasked(configMap, "upload.minio.accesskey", systemConfigVO.getUploadMinioAccesskey());
+        putIfNotMasked(configMap, "upload.minio.secretKey", systemConfigVO.getUploadMinioSecretKey());
         putIfNotNull(configMap, "upload.minio.bucketName", systemConfigVO.getUploadMinioBucketName());
         putIfNotNull(configMap, "upload.local.path", systemConfigVO.getUploadLocalPath());
         putIfNotNull(configMap, "login.backgroundImage", systemConfigVO.getLoginBackgroundImage());
@@ -126,6 +144,12 @@ public class SystemConfigServiceImpl extends ServiceImpl<SystemConfigMapper, Sys
 
     private void putIfNotNull(Map<String, String> map, String key, String value) {
         if (value != null) {
+            map.put(key, value);
+        }
+    }
+
+    private void putIfNotMasked(Map<String, String> map, String key, String value) {
+        if (value != null && !isMaskedSecret(value)) {
             map.put(key, value);
         }
     }

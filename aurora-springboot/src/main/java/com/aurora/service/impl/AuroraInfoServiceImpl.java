@@ -78,6 +78,9 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
     private VisitorAreaMapper visitorAreaMapper;
 
     @Autowired
+    private UserCollectMapper userCollectMapper;
+
+    @Autowired
     private HttpServletRequest request;
 
     @Override
@@ -154,6 +157,15 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
         return ((Number) total).intValue();
     }
 
+    /** 全站点赞总数：t_article.like_count 汇总 */
+    private Integer getBlogLikeCount() {
+        Object total = articleMapper.selectObjs(new QueryWrapper<Article>()
+                        .select("IFNULL(SUM(like_count), 0)")
+                        .eq("is_delete", FALSE))
+                .stream().findFirst().orElse(0);
+        return ((Number) total).intValue();
+    }
+
     @SneakyThrows
     @Override
     public AuroraHomeInfoDTO getAuroraHomeInfo() {
@@ -181,11 +193,12 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
         Integer userCount = userInfoMapper.selectCount(null);
         Integer articleCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
                 .eq(Article::getIsDelete, FALSE));
+        Integer likeCount = getBlogLikeCount();
+        Integer collectCount = userCollectMapper.selectCount(null);
         List<UniqueViewDTO> uniqueViews = uniqueViewService.listUniqueViews();
         List<ArticleStatisticsDTO> articleStatisticsDTOs = articleMapper.listArticleStatistics();
         List<CategoryDTO> categoryDTOs = categoryMapper.listCategories();
         List<TagDTO> tagDTOs = BeanCopyUtil.copyList(tagMapper.selectList(null), TagDTO.class);
-        // 访问量排行直接读 t_article.visit_count（数据库事实源），不再依赖 Redis zSet
         AuroraAdminInfoDTO auroraAdminInfoDTO = AuroraAdminInfoDTO.builder()
                 .articleStatisticsDTOs(articleStatisticsDTOs)
                 .tagDTOs(tagDTOs)
@@ -193,6 +206,8 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
                 .messageCount(messageCount)
                 .userCount(userCount)
                 .articleCount(articleCount)
+                .likeCount(likeCount)
+                .collectCount(collectCount)
                 .categoryDTOs(categoryDTOs)
                 .uniqueViewDTOs(uniqueViews)
                 .articleRankDTOs(listArticleRank())
@@ -273,17 +288,21 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
     }
 
     private List<ArticleRankDTO> listArticleRank() {
-        return articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                        .select(Article::getId, Article::getArticleTitle, Article::getVisitCount)
-                        .eq(Article::getIsDelete, FALSE)
-                        .gt(Article::getVisitCount, 0)
-                        .orderByDesc(Article::getVisitCount)
-                        .last("LIMIT 5"))
-                .stream().map(article -> ArticleRankDTO.builder()
-                        .articleTitle(article.getArticleTitle())
-                        .viewsCount(article.getVisitCount())
-                        .build())
-                .collect(Collectors.toList());
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .select(Article::getId, Article::getArticleTitle, Article::getVisitCount, Article::getLikeCount)
+                .eq(Article::getIsDelete, FALSE)
+                .orderByDesc(Article::getVisitCount)
+                .last("LIMIT 5"));
+        return articles.stream().map(article -> {
+            Integer collectCount = userCollectMapper.selectCount(new LambdaQueryWrapper<UserCollect>()
+                    .eq(UserCollect::getArticleId, article.getId()));
+            return ArticleRankDTO.builder()
+                    .articleTitle(article.getArticleTitle())
+                    .viewsCount(article.getVisitCount())
+                    .likeCount(article.getLikeCount())
+                    .collectCount(collectCount)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
 }

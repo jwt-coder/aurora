@@ -154,12 +154,12 @@
           <br />
           <ob-skeleton tag="div" :count="25" height="16px" width="100px" class="mr-2" />
         </div>
-        <div class="flex flex-col lg:flex-row justify-start items-end my-8 my-gap">
-          <div class="w-full h-full self-stretch mr-0 lg:mr-4" v-if="preArticleCard">
+        <div class="article-paginator my-8">
+          <div class="paginator-col" v-if="preArticleCard">
             <SubTitle title="settings.paginator.pre" icon="arrow-left-circle" />
             <ArticleCard class="pre-and-next-article" :data="preArticleCard" />
           </div>
-          <div class="w-full h-full self-stretch mt-0" v-if="nextArticleCard">
+          <div class="paginator-col" v-if="nextArticleCard">
             <SubTitle title="settings.paginator.next" :side="!isMobile ? 'right' : 'left'" icon="arrow-right-circle" />
             <ArticleCard class="pre-and-next-article" :data="nextArticleCard" />
           </div>
@@ -215,7 +215,7 @@ import tocbot from 'tocbot'
 import emitter from '@/utils/mitt'
 import { v3ImgPreviewFn } from 'v3-img-preview'
 import api from '@/api/api'
-import markdownToHtml from '@/utils/markdown'
+import markdownToHtml, { stripHtml } from '@/utils/markdown'
 
 export default defineComponent({
   name: 'Article',
@@ -346,54 +346,62 @@ export default defineComponent({
           }
           if (data.flag && data.data) {
             commonStore.setHeaderImage(data.data.articleCover)
-            new Promise((resolve) => {
-              data.data.articleContent = markdownToHtml(data.data.articleContent)
-              resolve(data.data)
-            }).then((article: any) => {
-              reactiveData.article = article
-              reactiveData.wordNum = Math.round(deleteHTMLTag(article.articleContent).length / 100) / 10 + 'k'
-              reactiveData.readTime = Math.round(deleteHTMLTag(article.articleContent).length / 400) + 'mins'
-              nextTick(() => {
-                Prism.highlightAll()
-                initTocbot()
-              })
-            })
-            new Promise((resolve) => {
-              data.data.preArticleCard.articleContent = markdownToHtml(data.data.preArticleCard.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
-              resolve(data.data.preArticleCard)
-            }).then((preArticleCard: any) => {
-              reactiveData.preArticleCard = preArticleCard
-            })
-            new Promise((resolve) => {
-              data.data.nextArticleCard.articleContent = markdownToHtml(data.data.nextArticleCard.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
-              resolve(data.data.nextArticleCard)
-            }).then((nextArticleCard) => {
-              reactiveData.nextArticleCard = nextArticleCard
+            const raw = data.data
+            // 上下篇只需摘要文本，跳过完整 markdown（katex/mermaid 很重）
+            if (raw.preArticleCard) {
+              raw.preArticleCard.articleContent = stripHtml(raw.preArticleCard.articleContent)
+              reactiveData.preArticleCard = raw.preArticleCard
+            }
+            if (raw.nextArticleCard) {
+              raw.nextArticleCard.articleContent = stripHtml(raw.nextArticleCard.articleContent)
+              reactiveData.nextArticleCard = raw.nextArticleCard
+            }
+            raw.articleContent = markdownToHtml(raw.articleContent)
+            reactiveData.article = raw
+            reactiveData.wordNum = Math.round(deleteHTMLTag(raw.articleContent).length / 100) / 10 + 'k'
+            reactiveData.readTime = Math.round(deleteHTMLTag(raw.articleContent).length / 400) + 'mins'
+            loading.value = false
+            nextTick(() => {
+              Prism.highlightAll()
+              initTocbot()
             })
           } else {
+            loading.value = false
             router.push({ path: '/出错啦' })
           }
         } catch (error) {
           // 拦截器已弹出错误提示，这里不再重复弹窗
-        } finally {
           loading.value = false
         }
       })
     }
+    let likePending = false
     const handleLike = () => {
-      if (!reactiveData.article) return
-      api.likeArticle(reactiveData.articleId).then(({ data }) => {
-        if (data.flag && data.data) {
-          reactiveData.article.likeCount = data.data.likeCount
-          reactiveData.article.isLiked = data.data.isLiked
-        }
-      })
+      if (!reactiveData.article || likePending) return
+      const article = reactiveData.article
+      const prevLiked = !!article.isLiked
+      const prevCount = article.likeCount || 0
+      likePending = true
+      // 乐观更新：点击立刻反馈，接口返回后再对齐或回滚
+      article.isLiked = !prevLiked
+      article.likeCount = prevLiked ? Math.max(prevCount - 1, 0) : prevCount + 1
+      api.likeArticle(reactiveData.articleId)
+        .then(({ data }) => {
+          if (data.flag && data.data) {
+            article.likeCount = data.data.likeCount
+            article.isLiked = data.data.isLiked
+          } else {
+            article.isLiked = prevLiked
+            article.likeCount = prevCount
+          }
+        })
+        .catch(() => {
+          article.isLiked = prevLiked
+          article.likeCount = prevCount
+        })
+        .finally(() => {
+          likePending = false
+        })
     }
     const handleCollect = () => {
       if (!userStore.userInfo || userStore.userInfo === '') {
@@ -558,24 +566,85 @@ export default defineComponent({
     border-left: 2px solid var(--text-accent);
   }
 }
-.pre-and-next-article {
+.article-paginator {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.paginator-col {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+
+  @media (min-width: 1024px) {
+    flex: 1 1 0%;
+  }
+
+  /* 两栏标题等高，卡片区均分剩余高度 */
+  > * {
+    min-width: 0;
+  }
+}
+
+/* class 落在 ArticleCard 根节点，与 .article-container 是同一元素 */
+.pre-and-next-article.article-container {
   height: 100%;
-  :deep(.article-container) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  > .article {
     height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-  }
-  :deep(.article-content) {
-    flex: 1;
-    p {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 5;
-      -webkit-box-orient: vertical;
+    grid-template-rows: none;
+    grid-template-columns: none;
+
+    > .article-thumbnail {
+      flex: 0 0 auto;
+      aspect-ratio: 16 / 9;
+      min-height: 120px;
+
+      img,
+      .thumbnail-screen {
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
     }
-    .article-footer {
-      margin-top: 13px;
+
+    > .article-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      > p {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+        min-height: calc(1.5em * 3);
+      }
+
+      > .article-footer {
+        margin-top: auto;
+        padding-top: 13px;
+        flex: 0 0 auto;
+      }
     }
   }
 }

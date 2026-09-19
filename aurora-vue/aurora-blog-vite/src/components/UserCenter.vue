@@ -60,7 +60,7 @@
               class="collect-item"
               @click="goArticle(item.id)">
               <span class="collect-title">{{ item.articleTitle }}</span>
-              <span class="collect-meta">{{ item.categoryName || '未分类' }} · {{ (item.createTime || '').slice(0, 10) }}</span>
+              <span class="collect-meta">{{ item.categoryName || '未分类' }} · {{ ((item.collectTime || item.createTime) + '').slice(0, 10) }}</span>
             </div>
           </div>
           <div v-else class="mt-3 text-sm opacity-60 text">暂无收藏，去文章页点「收藏」吧</div>
@@ -147,7 +147,16 @@ export default defineComponent({
       api.getCollectedArticles().then(({ data }: any) => {
         if (data.flag && data.data) {
           reactiveData.collectList = data.data
+        } else {
+          reactiveData.collectList = []
         }
+      }).catch(() => {
+        reactiveData.collectList = []
+        proxy.$notify({
+          title: 'Warning',
+          message: '收藏列表加载失败，请稍后重试',
+          type: 'warning'
+        })
       })
     }
     const goArticle = (articleId: any) => {

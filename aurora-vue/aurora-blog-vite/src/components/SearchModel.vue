@@ -79,8 +79,8 @@
                         </svg>
                       </div>
                       <div class="search-hit-content-wrapper">
-                        <span class="search-hit-title" v-html="result.articleContent"></span>
-                        <span class="search-hit-path" v-html="result.articleTitle"></span>
+                        <span class="search-hit-title" v-html="safeHitHtml(result.articleContent)"></span>
+                        <span class="search-hit-path" v-html="safeHitHtml(result.articleTitle)"></span>
                       </div>
                       <div class="search-hit-action">
                         <svg class="DocSearch-Hit-Select-Icon" width="20" height="20" viewBox="0 0 20 20">
@@ -126,8 +126,8 @@
                         </svg>
                       </div>
                       <div class="search-hit-content-wrapper">
-                        <span class="search-hit-title" v-html="result.articleContent"></span>
-                        <span class="search-hit-path" v-html="result.articleTitle"></span>
+                        <span class="search-hit-title" v-html="safeHitHtml(result.articleContent)"></span>
+                        <span class="search-hit-path" v-html="safeHitHtml(result.articleTitle)"></span>
                       </div>
                       <div class="search-hit-action">
                         <svg class="DocSearch-Hit-Select-Icon" width="20" height="20" viewBox="0 0 20 20">
@@ -256,6 +256,14 @@ export default defineComponent({
     const searchInput = ref<HTMLDivElement>()
     const searchIndexStatus = ref(false)
     const searchResults = ref<any>([])
+    // 搜索高亮仅允许 <mark>，其余 HTML 一律剥掉，避免 v-html XSS
+    const safeHitHtml = (html: any) => {
+      return String(html || '')
+        .replace(/<(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, '')
+        .replace(/<(script|style|iframe|object|embed)[^>]*\/?>/gi, '')
+        .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .replace(/javascript\s*:/gi, '')
+    }
     const router = useRouter()
     const openModal = ref(false)
     const openSearchContainer = ref(false)
@@ -407,6 +415,7 @@ export default defineComponent({
     }
     return {
       openModal: computed(() => openModal.value),
+      safeHitHtml,
       openSearchContainer: computed(() => openSearchContainer.value),
       searchResultsCount: computed(() => {
         return t('settings.search-result').replace('[total]', String(searchResults.value.length))

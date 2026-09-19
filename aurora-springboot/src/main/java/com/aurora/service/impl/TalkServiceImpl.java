@@ -82,6 +82,8 @@ public class TalkServiceImpl extends ServiceImpl<TalkMapper, Talk> implements Ta
     @Override
     public void saveOrUpdateTalk(TalkVO talkVO) {
         Talk talk = BeanCopyUtil.copyObject(talkVO, Talk.class);
+        // 说说正文会经 v-html 渲染，保存时消毒，阻断脚本注入
+        talk.setContent(com.aurora.util.HTMLUtil.sanitizeRichText(talk.getContent()));
         talk.setUserId(UserUtil.getUserDetailsDTO().getUserInfoId());
         this.saveOrUpdate(talk);
     }

@@ -1,0 +1,1 @@
+import{r as t}from"./index-0bc2ab36.js";const s=e=>t.get("/api/admin/comments",{params:e}),i=()=>t.get("/api/admin/comments",{params:{isReview:0,size:1}}),n=e=>t.put("/api/admin/comments/review",e),a=e=>t.delete("/api/admin/comments",{data:e});export{s as a,a as d,i as g,n as r};

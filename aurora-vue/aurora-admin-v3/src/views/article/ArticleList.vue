@@ -204,6 +204,12 @@ const columns = [
     render: (row) => row.viewsCount || 0
   },
   {
+    title: '点赞',
+    key: 'likeCount',
+    width: 70,
+    render: (row) => row.likeCount || 0
+  },
+  {
     title: '类型',
     key: 'type',
     width: 80,

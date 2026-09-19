@@ -29,6 +29,11 @@ public class ArticleAdminDTO {
 
     private Integer viewsCount;
 
+    /**
+     * 点赞数
+     */
+    private Integer likeCount;
+
     private String categoryName;
 
     private List<TagDTO> tagDTOs;

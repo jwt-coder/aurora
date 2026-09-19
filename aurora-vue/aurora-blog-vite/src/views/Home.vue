@@ -91,7 +91,7 @@ import { useCategoryStore } from '@/stores/Category'
 import { useI18n } from 'vue-i18n'
 import Paginator from '@/components/Paginator.vue'
 import api from '@/api/api'
-import markdownToHtml from '@/utils/markdown'
+import { stripHtml } from '@/utils/markdown'
 import SidebarBox from "@/components/Sidebar/src/SidebarBox.vue";
 
 export default defineComponent({
@@ -146,28 +146,21 @@ export default defineComponent({
     })
     const fetchTopAndFeatured = () => {
       api.getTopAndFeaturedArticles().then(({ data }) => {
-        try {
-          if (data.flag && data.data) {
-            // 没有任何置顶/推荐文章时后端返回 null 字段，逐个判空，不能裸取
-            if (data.data.topArticle) {
-              data.data.topArticle.articleContent = markdownToHtml(data.data.topArticle.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
-            }
-            ;(data.data.featuredArticles || []).forEach((item: any) => {
-              item.articleContent = markdownToHtml(item.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
-            })
-            articleStore.topArticle = data.data.topArticle || ''
-            articleStore.featuredArticles = data.data.featuredArticles || []
+        if (data.flag && data.data) {
+          // 没有任何置顶/推荐文章时后端返回 null 字段，逐个判空，不能裸取
+          if (data.data.topArticle) {
+            data.data.topArticle.articleContent = stripHtml(data.data.topArticle.articleContent)
           }
-        } finally {
-          // 无论成功失败都结束骨架状态，避免"没有数据"时骨架永远转圈
-          articleStore.topFeaturedLoaded = true
+          ;(data.data.featuredArticles || []).forEach((item: any) => {
+            item.articleContent = stripHtml(item.articleContent)
+          })
+          articleStore.topArticle = data.data.topArticle || ''
+          articleStore.featuredArticles = data.data.featuredArticles || []
         }
+      }).catch(() => {
+        // 网络失败也要结束骨架，避免一直转圈
+      }).finally(() => {
+        articleStore.topFeaturedLoaded = true
       })
     }
     const fetchArticles = () => {
@@ -185,10 +178,7 @@ export default defineComponent({
           .then(({ data }) => {
             if (data.flag && data.data) {
               data.data.records.forEach((item: any) => {
-                item.articleContent = markdownToHtml(item.articleContent)
-                  .replace(/<\/?[^>]*>/g, '')
-                  .replace(/[|]*\n/, '')
-                  .replace(/&npsp;/gi, '')
+                item.articleContent = stripHtml(item.articleContent)
               })
               articleStore.articles = data.data.records
               pagination.total = data.data.count
@@ -216,10 +206,7 @@ export default defineComponent({
         .then(({ data }) => {
           if (data.flag && data.data) {
             data.data.records.forEach((item: any) => {
-              item.articleContent = markdownToHtml(item.articleContent)
-                .replace(/<\/?[^>]*>/g, '')
-                .replace(/[|]*\n/, '')
-                .replace(/&npsp;/gi, '')
+              item.articleContent = stripHtml(item.articleContent)
             })
             articleStore.articles = data.data.records
             pagination.total = data.data.count

@@ -15,4 +15,14 @@ public class ArticleRankDTO {
 
     private Integer viewsCount;
 
+    /**
+     * 文章点赞数
+     */
+    private Integer likeCount;
+
+    /**
+     * 文章收藏数
+     */
+    private Integer collectCount;
+
 }

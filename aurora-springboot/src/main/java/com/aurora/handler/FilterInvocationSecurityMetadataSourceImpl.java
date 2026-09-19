@@ -59,6 +59,10 @@ public class FilterInvocationSecurityMetadataSourceImpl implements FilterInvocat
                 return SecurityConfig.createList(roleList.toArray(new String[]{}));
             }
         }
+        // t_resource 未登记的后台路径默认拒绝，避免 anyRequest().permitAll() 造成未授权访问
+        if (url != null && url.startsWith("/admin")) {
+            return SecurityConfig.createList("admin");
+        }
         return null;
     }
 
