@@ -1,5 +1,6 @@
 :root {
   --background: #1a1a1a;
+  /* 浅色正文用近黑；暗色主题在 body.theme-dark 下覆盖为浅色 */
   --comment: #111111;
   --foreground: #111111;
   --selection: #44475a;
@@ -33,6 +34,14 @@
   --purple-40: #bd93f966;
   --red-40: #ff555566;
   --yellow-40: #f1fa8c66;
+}
+
+/* 暗色站点：Prism 全局前景/注释必须是浅色，否则黑字贴深底不可见 */
+body.theme-dark {
+  --foreground: #e8eaf2;
+  --comment: #c5c8d4;
+  --subs: #9aa0b4;
+  --background: #15161f;
 }
 pre::-webkit-scrollbar {
   width: 0.5em;

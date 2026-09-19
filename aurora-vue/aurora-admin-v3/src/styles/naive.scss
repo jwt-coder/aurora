@@ -20,6 +20,29 @@
   border-radius: 8px;
 }
 
+/* Chrome 自动填充：登录/后台 n-input 不再显示系统默认灰黄底 */
+.n-input__input-el:-webkit-autofill,
+.n-input__input-el:-webkit-autofill:hover,
+.n-input__input-el:-webkit-autofill:focus,
+.n-input textarea:-webkit-autofill,
+.n-input textarea:-webkit-autofill:hover,
+.n-input textarea:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #303133 !important;
+  caret-color: #303133 !important;
+  transition: background-color 99999s ease-out;
+}
+
+/* 登录页表单（白底）：文字更黑，和表单标题一致 */
+.login-form .n-input__input-el:-webkit-autofill,
+.login-form .n-input__input-el:-webkit-autofill:hover,
+.login-form .n-input__input-el:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  caret-color: #1a1a1a !important;
+  transition: background-color 99999s ease-out;
+}
+
 .n-select {
   border-radius: 8px;
 }

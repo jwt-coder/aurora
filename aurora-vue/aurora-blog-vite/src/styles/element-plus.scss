@@ -104,6 +104,25 @@ body.theme-dark {
     color: var(--text-dim);
   }
 }
+
+/* Chrome 自动填充：强制主题底色/文字，避免出现系统默认的灰/黄底 */
+.el-input__inner:-webkit-autofill,
+.el-input__inner:-webkit-autofill:hover,
+.el-input__inner:-webkit-autofill:focus,
+.el-textarea__inner:-webkit-autofill,
+.el-textarea__inner:-webkit-autofill:hover,
+.el-textarea__inner:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--background-primary-alt) inset !important;
+  -webkit-text-fill-color: var(--text-normal) !important;
+  caret-color: var(--text-normal) !important;
+  transition: background-color 99999s ease-out;
+}
+
+/* 部分浏览器会把填充色画在 wrapper 上，这里一并压回主题色 */
+.el-input__wrapper:has(.el-input__inner:-webkit-autofill) {
+  background-color: var(--background-primary-alt) !important;
+}
+
 .el-input__wrapper,
 .el-textarea__inner {
   background-color: var(--background-primary-alt) !important;

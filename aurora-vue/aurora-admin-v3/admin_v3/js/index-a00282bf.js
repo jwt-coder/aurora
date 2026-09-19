@@ -1,0 +1,1 @@
+import{r as a}from"./index-7f554378.js";const s=e=>a.get("/api/admin/categories",{params:e}),i=e=>a.get("/api/admin/categories/search",{params:e}),o=e=>a.post("/api/admin/categories",e),r=e=>a.delete("/api/admin/categories",{data:e});export{o as a,r as d,s as g,i as s};

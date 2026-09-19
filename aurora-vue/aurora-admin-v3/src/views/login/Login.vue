@@ -319,6 +319,16 @@ onMounted(() => {
   height: 50px;
 }
 
+/* Chrome 自动填充密码时不要系统灰底，保持登录框白底 + 深色字 */
+.login-form :deep(.n-input__input-el):-webkit-autofill,
+.login-form :deep(.n-input__input-el):-webkit-autofill:hover,
+.login-form :deep(.n-input__input-el):-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+  caret-color: #1a1a1a !important;
+  transition: background-color 99999s ease-out;
+}
+
 .login-form :deep(.n-input__border) {
   border: 1.5px solid #e5e7eb !important;
   border-radius: 10px;
