@@ -254,8 +254,10 @@ const fetchHomeData = async () => {
         count: tag.count
       }))
     }
+    return data
   } catch (error) {
     console.error('获取首页数据失败:', error)
+    return null
   }
 }
 
@@ -435,8 +437,8 @@ const handleResize = () => {
 }
 
 onMounted(() => {
-  fetchHomeData()
-  fetchUserArea()
+  // 两个接口并行拉取，避免串行等待
+  Promise.all([fetchHomeData(), fetchUserArea()])
   window.addEventListener('resize', handleResize)
 })
 
@@ -618,10 +620,12 @@ onBeforeUnmount(() => {
 .tag-box {
   height: 280px;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
+  display: block;
+  overflow: hidden;
+}
+
+.tag-box :deep(.tag-list) {
+  height: 248px;
 }
 
 #article-tags {

@@ -39,11 +39,15 @@ export default function markdownToHtml(content: any) {
 }
 
 /** 摘要用：去掉标签即可，不必走完整 markdown 管线 */
-export function stripHtml(content: any) {
-  return String(content || '')
+export function stripHtml(content: any, maxLen?: number) {
+  let text = String(content || '')
     .replace(/<\/?[^>]*>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&[a-zA-Z#0-9]+;/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+  if (maxLen && maxLen > 0 && text.length > maxLen) {
+    text = text.slice(0, maxLen) + '…'
+  }
+  return text
 }

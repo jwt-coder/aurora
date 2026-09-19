@@ -1,0 +1,1 @@
+import{r as s}from"./index-aff05286.js";const e=a=>s.get("/api/admin/tags",{params:a}),i=a=>s.get("/api/admin/tags/search",{params:a}),g=a=>s.post("/api/admin/tags",a),p=a=>s.delete("/api/admin/tags",{data:a});export{g as a,p as d,e as g,i as s};

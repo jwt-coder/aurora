@@ -21,6 +21,8 @@ import eu.bitwalker.useragentutils.OperatingSystem;
 import eu.bitwalker.useragentutils.UserAgent;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.aurora.constant.CommonConstant.*;
@@ -79,6 +82,10 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
 
     @Autowired
     private UserCollectMapper userCollectMapper;
+
+    @Autowired
+    @Qualifier("taskExecutor")
+    private TaskExecutor taskExecutor;
 
     @Autowired
     private HttpServletRequest request;
@@ -188,31 +195,42 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
 
     @Override
     public AuroraAdminInfoDTO getAuroraAdminInfo() {
-        Integer viewsCount = getBlogViewsCount();
-        Integer messageCount = commentMapper.selectCount(new LambdaQueryWrapper<Comment>().eq(Comment::getType, 2));
-        Integer userCount = userInfoMapper.selectCount(null);
-        Integer articleCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
-                .eq(Article::getIsDelete, FALSE));
-        Integer likeCount = getBlogLikeCount();
-        Integer collectCount = userCollectMapper.selectCount(null);
-        List<UniqueViewDTO> uniqueViews = uniqueViewService.listUniqueViews();
-        List<ArticleStatisticsDTO> articleStatisticsDTOs = articleMapper.listArticleStatistics();
-        List<CategoryDTO> categoryDTOs = categoryMapper.listCategories();
-        List<TagDTO> tagDTOs = BeanCopyUtil.copyList(tagMapper.selectList(null), TagDTO.class);
-        AuroraAdminInfoDTO auroraAdminInfoDTO = AuroraAdminInfoDTO.builder()
-                .articleStatisticsDTOs(articleStatisticsDTOs)
-                .tagDTOs(tagDTOs)
-                .viewsCount(viewsCount)
-                .messageCount(messageCount)
-                .userCount(userCount)
-                .articleCount(articleCount)
-                .likeCount(likeCount)
-                .collectCount(collectCount)
-                .categoryDTOs(categoryDTOs)
-                .uniqueViewDTOs(uniqueViews)
-                .articleRankDTOs(listArticleRank())
+        // 指标查询互不依赖，并行执行，避免串行叠加导致后台首页接口偏慢
+        CompletableFuture<Integer> viewsF = CompletableFuture.supplyAsync(this::getBlogViewsCount, taskExecutor);
+        CompletableFuture<Integer> messageF = CompletableFuture.supplyAsync(
+                () -> commentMapper.selectCount(new LambdaQueryWrapper<Comment>().eq(Comment::getType, 2)), taskExecutor);
+        CompletableFuture<Integer> userF = CompletableFuture.supplyAsync(
+                () -> userInfoMapper.selectCount(null), taskExecutor);
+        CompletableFuture<Integer> articleF = CompletableFuture.supplyAsync(
+                () -> articleMapper.selectCount(new LambdaQueryWrapper<Article>().eq(Article::getIsDelete, FALSE)),
+                taskExecutor);
+        CompletableFuture<Integer> likeF = CompletableFuture.supplyAsync(this::getBlogLikeCount, taskExecutor);
+        CompletableFuture<Integer> collectF = CompletableFuture.supplyAsync(
+                () -> userCollectMapper.selectCount(null), taskExecutor);
+        CompletableFuture<List<UniqueViewDTO>> uniqueViewF = CompletableFuture.supplyAsync(
+                uniqueViewService::listUniqueViews, taskExecutor);
+        CompletableFuture<List<ArticleStatisticsDTO>> articleStatsF = CompletableFuture.supplyAsync(
+                articleMapper::listArticleStatistics, taskExecutor);
+        CompletableFuture<List<CategoryDTO>> categoryF = CompletableFuture.supplyAsync(
+                categoryMapper::listCategories, taskExecutor);
+        CompletableFuture<List<TagDTO>> tagF = CompletableFuture.supplyAsync(
+                tagMapper::listTags, taskExecutor);
+        CompletableFuture<List<ArticleRankDTO>> rankF = CompletableFuture.supplyAsync(
+                this::listArticleRank, taskExecutor);
+
+        return AuroraAdminInfoDTO.builder()
+                .articleStatisticsDTOs(articleStatsF.join())
+                .tagDTOs(tagF.join())
+                .viewsCount(viewsF.join())
+                .messageCount(messageF.join())
+                .userCount(userF.join())
+                .articleCount(articleF.join())
+                .likeCount(likeF.join())
+                .collectCount(collectF.join())
+                .categoryDTOs(categoryF.join())
+                .uniqueViewDTOs(uniqueViewF.join())
+                .articleRankDTOs(rankF.join())
                 .build();
-        return auroraAdminInfoDTO;
     }
 
     @Override
@@ -293,16 +311,29 @@ public class AuroraInfoServiceImpl implements AuroraInfoService {
                 .eq(Article::getIsDelete, FALSE)
                 .orderByDesc(Article::getVisitCount)
                 .last("LIMIT 5"));
-        return articles.stream().map(article -> {
-            Integer collectCount = userCollectMapper.selectCount(new LambdaQueryWrapper<UserCollect>()
-                    .eq(UserCollect::getArticleId, article.getId()));
-            return ArticleRankDTO.builder()
-                    .articleTitle(article.getArticleTitle())
-                    .viewsCount(article.getVisitCount())
-                    .likeCount(article.getLikeCount())
-                    .collectCount(collectCount)
-                    .build();
-        }).collect(Collectors.toList());
+        if (articles.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Integer> ids = articles.stream().map(Article::getId).collect(Collectors.toList());
+        Map<Integer, Integer> collectMap = new HashMap<>();
+        List<Map<String, Object>> collectRows = userCollectMapper.selectMaps(new QueryWrapper<UserCollect>()
+                .select("article_id", "COUNT(*) AS cnt")
+                .in("article_id", ids)
+                .groupBy("article_id"));
+        for (Map<String, Object> row : collectRows) {
+            Object articleId = row.get("article_id");
+            Object cnt = row.get("cnt");
+            if (articleId != null && cnt != null) {
+                collectMap.put(((Number) articleId).intValue(), ((Number) cnt).intValue());
+            }
+        }
+        Map<Integer, Integer> finalCollectMap = collectMap;
+        return articles.stream().map(article -> ArticleRankDTO.builder()
+                .articleTitle(article.getArticleTitle())
+                .viewsCount(article.getVisitCount())
+                .likeCount(article.getLikeCount())
+                .collectCount(finalCollectMap.getOrDefault(article.getId(), 0))
+                .build()).collect(Collectors.toList());
     }
 
 }

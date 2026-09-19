@@ -38,10 +38,10 @@
         <span :class="expanderClass" @click="expandHandler">
           <svg-icon icon-class="chevron" />
         </span>
-        <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-stretch">
           <template v-if="haveArticles === true">
-            <li v-for="article in articles" :key="article.id">
-              <ArticleCard class="home-article" :data="article" />
+            <li class="flex h-full min-w-0" v-for="article in articles" :key="article.id">
+              <ArticleCard class="home-article w-full h-full" :data="article" />
             </li>
             <li v-if="articles.length === 0" class="col-span-full text-center text-ob-dim py-16">
               {{ t('settings.no-articles') }}
@@ -53,8 +53,8 @@
             </li>
           </template>
           <template v-else>
-            <li v-for="n in 12" :key="n">
-              <ArticleCard :data="{}" />
+            <li class="flex h-full min-w-0" v-for="n in 12" :key="n">
+              <ArticleCard class="home-article w-full h-full" :data="{}" />
             </li>
           </template>
         </ul>
@@ -284,17 +284,55 @@ export default defineComponent({
 })
 </script>
 <style lang="scss">
-.home-article {
+/* 首页文章列表：同行卡片等高，标题/摘要定高，作者信息贴底 */
+.home-article.article-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  > .article {
+    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .article-content {
+    h2.article-title {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: calc(1.25em * 2 + 0.5em);
+      max-height: calc(1.25em * 2 + 0.5em);
+      margin-bottom: 0.75rem;
+    }
+
     p {
       overflow: hidden;
       text-overflow: ellipsis;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
+      word-break: break-word;
+      /* 无论摘要长短，占位高度一致 */
+      min-height: calc(1.4em * 3);
+      max-height: calc(1.4em * 3);
     }
+
+    p.encrypted-content {
+      min-height: calc(1.4em * 3);
+      max-height: calc(1.4em * 3);
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+    }
+
     .article-footer {
-      margin-top: 13px;
+      margin-top: auto;
+      padding-top: 12px;
+      flex: 0 0 auto;
     }
   }
 }

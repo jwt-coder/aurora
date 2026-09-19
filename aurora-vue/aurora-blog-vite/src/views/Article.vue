@@ -347,13 +347,13 @@ export default defineComponent({
           if (data.flag && data.data) {
             commonStore.setHeaderImage(data.data.articleCover)
             const raw = data.data
-            // 上下篇只需摘要文本，跳过完整 markdown（katex/mermaid 很重）
+            // 上下篇只需短摘要：无摘要时后端会回 SUBSTR(正文,500)，这里截断避免卡片被撑很高
             if (raw.preArticleCard) {
-              raw.preArticleCard.articleContent = stripHtml(raw.preArticleCard.articleContent)
+              raw.preArticleCard.articleContent = stripHtml(raw.preArticleCard.articleContent, 60)
               reactiveData.preArticleCard = raw.preArticleCard
             }
             if (raw.nextArticleCard) {
-              raw.nextArticleCard.articleContent = stripHtml(raw.nextArticleCard.articleContent)
+              raw.nextArticleCard.articleContent = stripHtml(raw.nextArticleCard.articleContent, 60)
               reactiveData.nextArticleCard = raw.nextArticleCard
             }
             raw.articleContent = markdownToHtml(raw.articleContent)
@@ -587,7 +587,6 @@ export default defineComponent({
     flex: 1 1 0%;
   }
 
-  /* 两栏标题等高，卡片区均分剩余高度 */
   > * {
     min-width: 0;
   }
@@ -595,25 +594,27 @@ export default defineComponent({
 
 /* class 落在 ArticleCard 根节点，与 .article-container 是同一元素 */
 .pre-and-next-article.article-container {
-  height: 100%;
+  height: auto;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
 
   > .article {
-    height: 100%;
+    height: auto;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
     grid-template-rows: none;
     grid-template-columns: none;
+    overflow: hidden;
 
     > .article-thumbnail {
       flex: 0 0 auto;
-      aspect-ratio: 16 / 9;
-      min-height: 120px;
+      height: 120px;
+      min-height: 0;
+      max-height: 120px;
 
       img,
       .thumbnail-screen {
@@ -621,6 +622,7 @@ export default defineComponent({
         left: 0;
         height: 100%;
         width: 100%;
+        object-fit: cover;
       }
     }
 
@@ -629,20 +631,52 @@ export default defineComponent({
       min-height: 0;
       display: flex;
       flex-direction: column;
+      /* 不要用 overflow:hidden 整块裁掉，否则头像/作者会看不见 */
+      overflow: visible;
+
+      > h2,
+      > h1,
+      > .article-title {
+        margin-top: 0.75rem;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 
       > p {
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         word-break: break-word;
-        min-height: calc(1.5em * 3);
+        /* 无摘要时不留大段空白，避免把 footer 挤出可视区 */
+        min-height: 0;
+        max-height: 2.8em;
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+      }
+
+      > p.encrypted-content {
+        display: block;
+        text-align: left;
+        font-style: normal;
+        min-height: 0;
+        max-height: 2.8em;
+        line-height: 1.4;
+        -webkit-line-clamp: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
       }
 
       > .article-footer {
         margin-top: auto;
-        padding-top: 13px;
+        padding-top: 8px;
         flex: 0 0 auto;
       }
     }

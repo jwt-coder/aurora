@@ -60,11 +60,11 @@
                      tag="h1"
                      height="1rem" />
         <!--        <p v-if="article.articleContent">{{ article.articleContent }}</p>-->
-        <p v-if="article.articleContent && article.status == 2" class="encrypted-content">
-          输入密码后访问🙃
+        <p v-if="article.status == 2" class="encrypted-content">
+          {{ article.articleContent || '输入密码后访问🙃' }}
         </p>
         <p v-else-if="article.articleContent">{{ article.articleContent }}</p>
-
+        <p v-else-if="article.id" class="encrypted-content">暂无摘要</p>
         <ob-skeleton v-else tag="p" :count="5" height="16px" />
         <div class="article-footer" v-if="article.author && article.createTime">
           <div class="flex flex-row items-center">
@@ -168,5 +168,15 @@ export default defineComponent({
   align-items: center;
   justify-content: center;
   line-height: 1.6;
+}
+
+/* 上下篇卡片里不要用列表页那套大块空白占位 */
+.pre-and-next-article .encrypted-content {
+  min-height: 0;
+  display: block;
+  text-align: left;
+  font-style: normal;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 </style>

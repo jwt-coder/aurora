@@ -1,21 +1,31 @@
 <template>
-  <div class="tag-cloud-wrapper">
-    <span
-      v-for="(tag, index) in tags"
+  <div class="tag-list" v-if="sorted.length > 0">
+    <div
+      v-for="(tag, index) in sorted"
       :key="tag.id ?? index"
-      class="tag-pill"
-      :class="colorClasses[index % colorClasses.length]"
-      :style="{ fontSize: fontSize(tag.count) + 'px' }"
-      :title="`${tag.name}：${tag.count ?? 0} 篇文章`"
+      class="tag-row"
+      :class="`rank-${index + 1}`"
+      :title="`${tag.name} · ${tag.count ?? 0} 篇`"
     >
-      {{ tag.name }}
-      <b v-if="tag.count != null" class="tag-count">{{ tag.count }}</b>
-    </span>
+      <div class="tag-rank" :class="`r-${index + 1}`">{{ index + 1 }}</div>
+      <div class="tag-main">
+        <div class="tag-name">
+          <span class="tag-hash">#</span>{{ tag.name }}
+        </div>
+        <div class="tag-meta">
+          <span class="tag-count">{{ tag.count ?? 0 }} 篇</span>
+          <div class="tag-bar">
+            <div class="tag-bar-inner" :style="{ width: barWidth(tag.count) }"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <div v-else class="tag-list tag-list-empty">暂无标签数据</div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
   data: {
@@ -24,87 +34,147 @@ const props = defineProps({
   }
 })
 
-const tags = ref([])
+const sorted = computed(() => {
+  return [...(props.data || [])].sort((a, b) => {
+    const ca = a.count || 0
+    const cb = b.count || 0
+    if (cb !== ca) return cb - ca
+    return String(a.name || a.tagName || '').localeCompare(String(b.name || ''), 'zh-CN')
+  })
+})
 
-watch(
-  () => props.data,
-  (newData) => {
-    tags.value = newData || []
-  },
-  { immediate: true }
-)
-
-const colorClasses = ['color-pink', 'color-blue', 'color-cyan', 'color-purple']
-
-// 按文章数加权字号：12px ~ 20px
-const fontSize = (count) => {
-  if (!count || tags.value.length === 0) return 13
-  const max = Math.max(...tags.value.map(t => t.count || 0))
-  if (max <= 1) return 14
-  const ratio = (count || 0) / max
-  return Math.round(12 + ratio * 8)
+const barWidth = (count) => {
+  if (!sorted.value.length) return '0%'
+  const max = Math.max(...sorted.value.map(t => t.count || 0), 1)
+  return Math.max(((count || 0) / max) * 100, 6) + '%'
 }
 </script>
 
 <style scoped>
-.tag-cloud-wrapper {
+.tag-list {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: center;
-  align-items: center;
-  gap: 12px 10px;
-  padding: 8px 4px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 2px 4px;
 }
 
-.tag-pill {
-  display: inline-flex;
+.tag-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tag-list::-webkit-scrollbar-thumb {
+  background: #f0c1dd;
+  border-radius: 4px;
+}
+
+.tag-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fafbfd;
+  border: 1px solid #f0f2f7;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tag-row:hover {
+  border-color: #f7c4de;
+  background: #fff7fb;
+}
+
+.tag-rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-weight: 500;
-  line-height: 1.2;
-  cursor: default;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: #eef0f5;
+  color: #8b8f9a;
 }
 
-.tag-pill:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+.tag-rank.r-1 {
+  background: #ffe4f0;
+  color: #c2185b;
+}
+
+.tag-rank.r-2 {
+  background: #f3e8ff;
+  color: #7a4fc0;
+}
+
+.tag-rank.r-3 {
+  background: #e8f3ff;
+  color: #3d7dd8;
+}
+
+.tag-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2f38;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-hash {
+  color: #e93796;
+  font-weight: 700;
+  margin-right: 2px;
+}
+
+.tag-row.rank-1 .tag-name {
+  color: #c2185b;
+  font-weight: 600;
+}
+
+.tag-meta {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tag-count {
-  font-size: 0.75em;
-  font-weight: 700;
-  opacity: 0.55;
+  font-size: 12px;
+  color: #8b8f9a;
+  flex-shrink: 0;
+  min-width: 36px;
 }
 
-/* Aurora 色板：与前台主题一致（粉/蓝/青/紫） */
-.color-pink {
-  color: #e93796;
-  background: rgba(233, 55, 150, 0.08);
-  border: 1px solid rgba(233, 55, 150, 0.25);
+.tag-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: #f0f2f7;
+  overflow: hidden;
 }
 
-.color-blue {
-  color: #547ce7;
-  background: rgba(84, 124, 231, 0.08);
-  border: 1px solid rgba(84, 124, 231, 0.25);
+.tag-bar-inner {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f79ad3 0%, #e93796 100%);
+  transition: width 0.4s ease;
 }
 
-.color-cyan {
-  color: #1a9cb8;
-  background: rgba(36, 198, 220, 0.1);
-  border: 1px solid rgba(36, 198, 220, 0.3);
-}
-
-.color-purple {
-  color: #7a52e8;
-  background: rgba(84, 51, 255, 0.07);
-  border: 1px solid rgba(84, 51, 255, 0.22);
+.tag-list-empty {
+  align-items: center;
+  justify-content: center;
+  color: #b0b4c0;
+  font-size: 13px;
 }
 </style>
