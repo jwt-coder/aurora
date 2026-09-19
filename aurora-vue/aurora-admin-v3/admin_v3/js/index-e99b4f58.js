@@ -1,1 +1,0 @@
-import{r as e}from"./index-aff05286.js";const a=s=>e.get("/api/admin/users",{params:s}),t=s=>e.get("/api/admin/users/online",{params:s}),n=s=>e.delete(`/api/admin/users/${s}/online`),r=s=>e.put("/api/admin/users/disable",s),p=s=>e.put("/api/admin/users/role",s),o=()=>e.get("/api/admin/users/role");export{p as a,o as b,t as c,a as g,n as o,r as u};

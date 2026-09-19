@@ -1,1 +1,0 @@
-import{r as t}from"./index-aff05286.js";const e=a=>t.get("/api/admin/talks",{params:a}),i=a=>t.get(`/api/admin/talks/${a}`),l=a=>t.post("/api/admin/talks",a),p=a=>t.delete("/api/admin/talks",{data:a});export{i as a,p as d,e as g,l as s};

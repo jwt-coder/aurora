@@ -1,1 +1,0 @@
-import{r as s}from"./index-aff05286.js";const a=()=>s.get("/api/admin/user/menus"),i=e=>s.get("/api/admin/menus",{params:e}),t=e=>s.post("/api/admin/menus",e),p=e=>s.delete(`/api/admin/menus/${e}`),u=e=>s.put("/api/admin/menus/isHidden",e);export{i as a,p as d,a as g,t as s,u};

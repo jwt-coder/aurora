@@ -106,16 +106,25 @@ const rules = {
   }
 }
 
-// 获取系统配置
+// 登录页使用公开配置接口（/api/admin/** 在未登录时会被权限拦截）
 const getSystemConfig = async () => {
   try {
-    const res = await request.get('/api/admin/system/config')
-    if (res.data && res.data.loginBackgroundImage) {
-      backgroundImage.value = res.data.loginBackgroundImage
+    const res = await request.get('/api/config/login')
+    const data = res.data || {}
+    if (data.loginBackgroundImage) {
+      backgroundImage.value = data.loginBackgroundImage
+    }
+    if (data.name) {
+      websiteStore.name = data.name
+    }
+    if (data.logo) {
+      websiteStore.logo = data.logo
+    }
+    if (data.favicon) {
+      websiteStore.favicon = data.favicon
     }
   } catch (error) {
-    // 获取失败使用默认背景
-    console.error('获取系统配置失败:', error)
+    console.error('获取登录页配置失败:', error)
   }
 }
 
@@ -137,24 +146,6 @@ const handleLogin = async () => {
 
 onMounted(() => {
   getSystemConfig()
-  // 获取网站配置（静默处理错误，因为登录页可能未授权）
-  websiteStore.fetchWebsiteConfig().then(() => {
-    // 更新favicon
-    const faviconUrl = websiteStore.getFavicon
-    if (faviconUrl) {
-      // 移除所有现有的 favicon links
-      const existingLinks = document.querySelectorAll("link[rel*='icon']")
-      existingLinks.forEach(link => link.remove())
-
-      // 添加新的 favicon
-      const link = document.createElement('link')
-      link.rel = 'icon'
-      link.href = faviconUrl
-      document.getElementsByTagName('head')[0].appendChild(link)
-    }
-  }).catch(() => {
-    // 登录页获取网站配置失败是正常的，静默处理
-  })
 })
 </script>
 
